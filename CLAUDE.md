@@ -15,8 +15,8 @@ bun run build
 # Build for npm distribution
 bun run build:npm
 
-# Install dependencies (use pnpm)
-pnpm install
+# Install dependencies (use bun)
+bun install
 ```
 
 ### Testing
@@ -58,10 +58,11 @@ bun run format
 The application is a CLI tool built with Bun and TypeScript that provides a GraphQL-inspired query interface for Better Stack logs.
 
 **Key architectural decisions:**
-- **Bun runtime**: Used for fast execution and native TypeScript support
+- **Bun runtime**: Used for fast execution, native TypeScript support, and package management
 - **Commander.js**: For CLI command parsing and structure
 - **Dual authentication**: Requires both Telemetry API token (for source discovery) and Query API credentials (for log data access)
 - **GraphQL-inspired syntax**: Custom parser in `src/parser/graphql.ts` converts user-friendly queries to ClickHouse SQL
+- **Source aliases**: Built-in aliases for common environments (dev→sweetistics-dev, prod→sweetistics, etc.)
 
 ### Directory Layout
 ```
@@ -112,6 +113,7 @@ The separation allows for granular access control - some users might list source
 - Config stored in `~/.bslog/config.json`
 - Supports default source, limit, and output format
 - Query history and saved queries for future features
+- Source aliases for convenient environment switching
 
 **Error Handling:**
 - Detailed error messages for missing credentials
@@ -125,10 +127,12 @@ The separation allows for granular access control - some users might list source
 
 ## Testing Strategy
 
-- **Unit tests** (`src/__tests__/unit/`): Test utilities, parsers, formatters in isolation
-- **Integration tests** (`src/__tests__/integration/`): Test query building and API interactions
-- Tests use Bun's built-in test runner
+- **Unit tests** (`src/__tests__/unit/`): Test utilities, parsers, formatters, config, and error handling in isolation
+- **Integration tests** (`src/__tests__/integration/`): Test query building, API interactions, and verbose mode
+- **Comprehensive coverage**: 86 tests covering source aliases, credentials, verbose mode, and error messages
+- Tests use Bun's built-in test runner with mocking support
 - Coverage reporting available via `bun test:coverage`
+- All tests must pass before commit
 
 ## Code Style
 

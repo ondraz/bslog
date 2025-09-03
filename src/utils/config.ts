@@ -21,7 +21,7 @@ export function getApiToken(): string {
 export function getQueryCredentials(): { username?: string; password?: string } {
   const username = process.env.BETTERSTACK_QUERY_USERNAME
   const password = process.env.BETTERSTACK_QUERY_PASSWORD
-  
+
   return { username, password }
 }
 
@@ -76,21 +76,21 @@ export function addToHistory(query: string): void {
 
 // Common source aliases for convenience
 const SOURCE_ALIASES: Record<string, string> = {
-  'dev': 'sweetistics-dev',
-  'development': 'sweetistics-dev',
-  'prod': 'sweetistics',
-  'production': 'sweetistics',
-  'staging': 'sweetistics-staging',
-  'test': 'sweetistics-test',
+  dev: 'sweetistics-dev',
+  development: 'sweetistics-dev',
+  prod: 'sweetistics',
+  production: 'sweetistics',
+  staging: 'sweetistics-staging',
+  test: 'sweetistics-test',
 }
 
 export function resolveSourceAlias(source: string | undefined): string | undefined {
-  if (!source) return undefined
-  
+  if (source === undefined || source === null) return undefined
+
   // Check if it's an alias
   const aliased = SOURCE_ALIASES[source.toLowerCase()]
   if (aliased) return aliased
-  
+
   // Return as-is if not an alias
   return source
 }

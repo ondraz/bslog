@@ -23,8 +23,8 @@ A powerful, intuitive CLI tool for querying Better Stack logs with GraphQL-inspi
 ### Global Installation (Recommended)
 
 ```bash
-# Using pnpm (recommended)
-pnpm add -g @steipete/bslog
+# Using bun (recommended)
+bun add -g @steipete/bslog
 
 # Or using npm
 npm install -g @steipete/bslog
@@ -35,22 +35,18 @@ npm install -g @steipete/bslog
 ```bash
 git clone https://github.com/steipete/bslog.git
 cd bslog
-pnpm install  # Uses pnpm as package manager
-bun run build # Uses Bun for building and running
-pnpm link -g  # Link globally for testing
+bun install   # Uses Bun for package management
+bun run build # Uses Bun for building and running  
+bun link      # Link globally for testing
 ```
 
 ### Prerequisites
 
-- **[Bun](https://bun.sh)** >= 1.0.0 - JavaScript runtime and bundler
-- **[pnpm](https://pnpm.io)** >= 10.0.0 - Fast, disk space efficient package manager
+- **[Bun](https://bun.sh)** >= 1.0.0 - JavaScript runtime, bundler, and package manager
 
 ```bash
 # Install Bun
 curl -fsSL https://bun.sh/install | bash
-
-# Install pnpm
-curl -fsSL https://get.pnpm.io/install.sh | sh -
 ```
 
 ## Authentication Setup
@@ -247,10 +243,12 @@ Options:
   -f, --follow            Follow log output
   --interval <ms>         Polling interval in milliseconds (default: 2000)
   --format <type>         Output format (json|table|csv|pretty)
+  -v, --verbose           Show SQL query and debug information
 
 Examples:
   bslog tail -n 50                     # Last 50 logs
   bslog tail -f                        # Follow logs
+  bslog tail -v                        # Show SQL queries
   bslog tail --since 1h --level error  # Errors from last hour
 ```
 
@@ -300,10 +298,11 @@ bslog query <query> [options]
 Options:
   -s, --source <name>     Source name
   -f, --format <type>     Output format (default: pretty)
+  -v, --verbose           Show SQL query and debug information
 
 Examples:
   bslog query "{ logs(limit: 100) { dt, level, message } }"
-  bslog query "{ logs(level: 'error', since: '1h') { * } }"
+  bslog query "{ logs(level: 'error', since: '1h') { * } }" --verbose
 ```
 
 #### `sql` - Raw SQL queries (Advanced)
@@ -312,6 +311,7 @@ bslog sql <sql> [options]
 
 Options:
   -f, --format <type>     Output format (default: json)
+  -v, --verbose           Show SQL query and debug information
 
 Example:
   bslog sql "SELECT dt, raw FROM remote(t123_logs) WHERE raw LIKE '%error%' LIMIT 10"
@@ -339,6 +339,26 @@ Options:
 
 Example:
   bslog sources get my-app-production
+```
+
+### Source Aliases
+
+For convenience, common source aliases are available:
+
+- `dev`, `development` → `sweetistics-dev`
+- `prod`, `production` → `sweetistics`
+- `staging` → `sweetistics-staging` 
+- `test` → `sweetistics-test`
+
+```bash
+# These are equivalent:
+bslog tail prod
+bslog tail production
+bslog tail sweetistics
+
+# Use in any command:
+bslog errors dev --since 1h
+bslog query "{ logs(limit: 10) { * } }" --source staging
 ```
 
 ### Configuration

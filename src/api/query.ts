@@ -1,5 +1,5 @@
 import type { LogEntry, QueryOptions } from '../types'
-import { getQueryCredentials, loadConfig } from '../utils/config'
+import { getQueryCredentials, loadConfig, resolveSourceAlias } from '../utils/config'
 import { parseTimeString, toClickHouseDateTime } from '../utils/time'
 import { BetterStackClient } from './client'
 import { SourcesAPI } from './sources'
@@ -15,7 +15,8 @@ export class QueryAPI {
 
   async buildQuery(options: QueryOptions): Promise<string> {
     const config = loadConfig()
-    const sourceName = options.source || config.defaultSource
+    const rawSourceName = options.source || config.defaultSource
+    const sourceName = resolveSourceAlias(rawSourceName)
 
     if (!sourceName) {
       throw new Error(
@@ -103,12 +104,12 @@ export class QueryAPI {
 
   async execute(options: QueryOptions): Promise<LogEntry[]> {
     const sql = await this.buildQuery(options)
-    
+
     // Only show SQL query in verbose mode
     if (options.verbose) {
       console.error(`Executing query: ${sql}`)
     }
-    
+
     const { username, password } = getQueryCredentials()
     return this.client.query(sql, username, password)
   }

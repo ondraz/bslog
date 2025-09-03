@@ -42,6 +42,7 @@ program
   .argument('<query>', 'GraphQL-like query string')
   .option('-s, --source <name>', 'Source name')
   .option('-f, --format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Query logs using GraphQL-like syntax')
   .action(async (query, options) => {
     await runQuery(query, options)
@@ -52,6 +53,7 @@ program
   .command('sql')
   .argument('<sql>', 'Raw ClickHouse SQL query')
   .option('-f, --format <type>', 'Output format (json|table|csv|pretty)', 'json')
+  .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Execute raw ClickHouse SQL query')
   .action(async (sql, options) => {
     await runSql(sql, options)
@@ -68,7 +70,9 @@ program
   .option('--interval <ms>', 'Polling interval in milliseconds', '2000')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('-v, --verbose', 'Show SQL query and debug information')
-  .description('Tail logs (similar to tail -f)\nExamples:\n  bslog tail                    # use default source\n  bslog tail sweetistics-dev    # use specific source\n  bslog tail prod -n 50         # tail production logs')
+  .description(
+    'Tail logs (similar to tail -f)\nExamples:\n  bslog tail                    # use default source\n  bslog tail sweetistics-dev    # use specific source\n  bslog tail prod -n 50         # tail production logs',
+  )
   .action(async (source, options) => {
     await tailLogs({
       ...options,
@@ -84,7 +88,9 @@ program
   .option('--since <time>', 'Show errors since (e.g., 1h, 2d)')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('-v, --verbose', 'Show SQL query and debug information')
-  .description('Show only error logs\nExamples:\n  bslog errors                  # use default source\n  bslog errors sweetistics-dev  # errors from dev\n  bslog errors prod --since 1h  # recent prod errors')
+  .description(
+    'Show only error logs\nExamples:\n  bslog errors                  # use default source\n  bslog errors sweetistics-dev  # errors from dev\n  bslog errors prod --since 1h  # recent prod errors',
+  )
   .action(async (source, options) => {
     await showErrors({
       ...options,
@@ -117,7 +123,9 @@ program
   .option('--since <time>', 'Search logs since (e.g., 1h, 2d)')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('-v, --verbose', 'Show SQL query and debug information')
-  .description('Search logs for a pattern\nExamples:\n  bslog search "error"                    # search in default source\n  bslog search "error" sweetistics-dev    # search in dev\n  bslog search "timeout" prod --since 1h  # search recent prod logs')
+  .description(
+    'Search logs for a pattern\nExamples:\n  bslog search "error"                    # search in default source\n  bslog search "error" sweetistics-dev    # search in dev\n  bslog search "timeout" prod --since 1h  # search recent prod logs',
+  )
   .action(async (pattern, source, options) => {
     await searchLogs(pattern, {
       ...options,
@@ -196,6 +204,15 @@ program.on('--help', () => {
   console.log('')
   console.log('  # Raw SQL:')
   console.log('  $ bslog sql "SELECT * FROM remote(t123_logs) LIMIT 10"')
+  console.log('')
+  console.log(chalk.bold('Authentication:'))
+  console.log('  Requires environment variables for Better Stack API access:')
+  console.log('  - BETTERSTACK_API_TOKEN        # For sources discovery')
+  console.log('  - BETTERSTACK_QUERY_USERNAME   # For log queries')  
+  console.log('  - BETTERSTACK_QUERY_PASSWORD   # For log queries')
+  console.log('')
+  console.log('  Add to ~/.zshrc (or ~/.bashrc) then reload with:')
+  console.log(chalk.dim('  $ source ~/.zshrc'))
 })
 
 // Parse and execute
