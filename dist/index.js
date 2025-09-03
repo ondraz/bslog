@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 // @bun
 import { createRequire } from "node:module";
 var __create = Object.create;
@@ -9318,13 +9318,13 @@ function addToHistory(query) {
 var SOURCE_ALIASES = {
   dev: "sweetistics-dev",
   development: "sweetistics-dev",
-  prod: "sweetistics-2",
-  production: "sweetistics-2",
+  prod: "sweetistics",
+  production: "sweetistics",
   staging: "sweetistics-staging",
   test: "sweetistics-test"
 };
 function resolveSourceAlias(source) {
-  if (!source)
+  if (source === undefined || source === null)
     return;
   const aliased = SOURCE_ALIASES[source.toLowerCase()];
   if (aliased)
@@ -10768,7 +10768,8 @@ class QueryAPI {
   }
   async buildQuery(options) {
     const config = loadConfig();
-    const sourceName = options.source || config.defaultSource;
+    const rawSourceName = options.source || config.defaultSource;
+    const sourceName = resolveSourceAlias(rawSourceName);
     if (!sourceName) {
       throw new Error("No source specified. Use --source or set a default source with: bslog config source <name>");
     }
@@ -11383,10 +11384,10 @@ try {
 } catch {}
 var program2 = new Command;
 program2.name("bslog").description("Better Stack log query CLI with GraphQL-inspired syntax").version("1.0.0");
-program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
+program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
   await runQuery(query, options);
 });
-program2.command("sql").argument("<sql>", "Raw ClickHouse SQL query").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "json").description("Execute raw ClickHouse SQL query").action(async (sql, options) => {
+program2.command("sql").argument("<sql>", "Raw ClickHouse SQL query").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "json").option("-v, --verbose", "Show SQL query and debug information").description("Execute raw ClickHouse SQL query").action(async (sql, options) => {
   await runSql(sql, options);
 });
 program2.command("tail [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--subsystem <name>", "Filter by subsystem").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("-f, --follow", "Follow log output").option("--interval <ms>", "Polling interval in milliseconds", "2000").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description(`Tail logs (similar to tail -f)
@@ -11467,6 +11468,15 @@ program2.on("--help", () => {
   console.log("");
   console.log("  # Raw SQL:");
   console.log('  $ bslog sql "SELECT * FROM remote(t123_logs) LIMIT 10"');
+  console.log("");
+  console.log(source_default.bold("Authentication:"));
+  console.log("  Requires environment variables for Better Stack API access:");
+  console.log("  - BETTERSTACK_API_TOKEN        # For sources discovery");
+  console.log("  - BETTERSTACK_QUERY_USERNAME   # For log queries");
+  console.log("  - BETTERSTACK_QUERY_PASSWORD   # For log queries");
+  console.log("");
+  console.log("  Add to ~/.zshrc (or ~/.bashrc) then reload with:");
+  console.log(source_default.dim("  $ source ~/.zshrc"));
 });
 program2.parse();
 if (program2.args.length === 0) {
