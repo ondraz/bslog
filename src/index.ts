@@ -31,10 +31,24 @@ try {
 
 const program = new Command()
 
+let cliVersion = '0.0.0'
+try {
+  const { readFileSync } = require('node:fs')
+  const { dirname, join } = require('node:path')
+  const { fileURLToPath } = require('node:url')
+  const packageJsonPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json')
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+  if (packageJson && typeof packageJson.version === 'string') {
+    cliVersion = packageJson.version
+  }
+} catch {
+  // Default will remain 0.0.0 if package metadata cannot be loaded
+}
+
 program
   .name('bslog')
   .description('Better Stack log query CLI with GraphQL-inspired syntax')
-  .version('1.0.0')
+  .version(cliVersion)
 
 // Query command - GraphQL-like syntax
 program
@@ -208,7 +222,7 @@ program.on('--help', () => {
   console.log(chalk.bold('Authentication:'))
   console.log('  Requires environment variables for Better Stack API access:')
   console.log('  - BETTERSTACK_API_TOKEN        # For sources discovery')
-  console.log('  - BETTERSTACK_QUERY_USERNAME   # For log queries')  
+  console.log('  - BETTERSTACK_QUERY_USERNAME   # For log queries')
   console.log('  - BETTERSTACK_QUERY_PASSWORD   # For log queries')
   console.log('')
   console.log('  Add to ~/.zshrc (or ~/.bashrc) then reload with:')

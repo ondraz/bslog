@@ -11403,7 +11403,18 @@ try {
   }
 } catch {}
 var program2 = new Command;
-program2.name("bslog").description("Better Stack log query CLI with GraphQL-inspired syntax").version("1.0.0");
+var cliVersion = "0.0.0";
+try {
+  const { readFileSync: readFileSync2 } = __require("fs");
+  const { dirname, join: join2 } = __require("path");
+  const { fileURLToPath } = __require("url");
+  const packageJsonPath = join2(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+  const packageJson = JSON.parse(readFileSync2(packageJsonPath, "utf8"));
+  if (packageJson && typeof packageJson.version === "string") {
+    cliVersion = packageJson.version;
+  }
+} catch {}
+program2.name("bslog").description("Better Stack log query CLI with GraphQL-inspired syntax").version(cliVersion);
 program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
   await runQuery(query, options);
 });
