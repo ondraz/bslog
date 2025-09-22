@@ -20,7 +20,7 @@ export function parseTimeString(timeStr: string): Date {
         throw new Error(`Unknown time unit: ${unit}`)
     }
   }
-  
+
   // Check if it matches the pattern but with invalid unit
   if (/^\d+[a-z]$/i.test(timeStr)) {
     const unit = timeStr.match(/[a-z]$/i)?.[0]
@@ -41,13 +41,7 @@ export function formatDateTime(date: Date): string {
 }
 
 export function toClickHouseDateTime(date: Date): string {
-  // ClickHouse expects format: YYYY-MM-DD HH:MM:SS
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+  // ClickHouse expects format: YYYY-MM-DD HH:MM:SS (UTC)
+  const iso = date.toISOString() // Always UTC
+  return iso.slice(0, 19).replace('T', ' ')
 }

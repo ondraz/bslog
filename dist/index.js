@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 // @bun
 import { createRequire } from "node:module";
 var __create = Object.create;
@@ -9417,13 +9417,8 @@ function parseTimeString(timeStr) {
   return date;
 }
 function toClickHouseDateTime(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  const iso = date.toISOString();
+  return iso.slice(0, 19).replace("T", " ");
 }
 
 // node_modules/.pnpm/node-fetch@3.3.2/node_modules/node-fetch/src/index.js
@@ -10790,7 +10785,18 @@ class QueryAPI {
       conditions.push(`dt <= toDateTime64('${toClickHouseDateTime(untilDate)}', 3)`);
     }
     if (options.level) {
-      conditions.push(`getJSON(raw, 'level') = '${options.level}'`);
+      const escapedLevel = options.level.replace(/'/g, "''").toLowerCase();
+      const levelExpression = `lowerUTF8(COALESCE(` + `JSONExtractString(raw, 'level'),` + `JSON_VALUE(raw, '$.level'),` + `JSON_VALUE(raw, '$.levelName'),` + `JSON_VALUE(raw, '$.vercel.level')
+      ))`;
+      const messageExpression = `COALESCE(JSONExtractString(raw, 'message'), JSON_VALUE(raw, '$.message'))`;
+      const statusExpression = `toInt32OrZero(JSON_VALUE(raw, '$.vercel.proxy.status_code'))`;
+      if (escapedLevel === "error") {
+        conditions.push(`(${levelExpression} = '${escapedLevel}' OR ${statusExpression} >= 500 OR positionCaseInsensitive(${messageExpression}, 'error') > 0 OR JSONHas(raw, 'error'))`);
+      } else if (escapedLevel === "warning" || escapedLevel === "warn") {
+        conditions.push(`(${levelExpression} IN ('${escapedLevel}', 'warning', 'warn') OR (${statusExpression} >= 400 AND ${statusExpression} < 500))`);
+      } else {
+        conditions.push(`${levelExpression} = '${escapedLevel}'`);
+      }
     }
     if (options.subsystem) {
       conditions.push(`getJSON(raw, 'subsystem') = '${options.subsystem}'`);
@@ -11118,7 +11124,21 @@ function extractLevel(entry) {
   if (entry.raw) {
     try {
       const parsed = typeof entry.raw === "string" ? JSON.parse(entry.raw) : entry.raw;
-      return parsed.level || parsed.severity || null;
+      if (typeof parsed === "object" && parsed !== null) {
+        if (typeof parsed.level === "string" && parsed.level.length > 0) {
+          return parsed.level;
+        }
+        if (typeof parsed.severity === "string" && parsed.severity.length > 0) {
+          return parsed.severity;
+        }
+        if (parsed.vercel && typeof parsed.vercel === "object") {
+          const vercelLevel = parsed.vercel.level;
+          if (typeof vercelLevel === "string" && vercelLevel.length > 0) {
+            return vercelLevel;
+          }
+        }
+      }
+      return null;
     } catch {
       const match = entry.raw.match(/\b(ERROR|WARN|WARNING|INFO|DEBUG|FATAL)\b/i);
       return match ? match[1] : null;

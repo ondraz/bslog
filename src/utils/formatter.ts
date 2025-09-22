@@ -175,7 +175,23 @@ function extractLevel(entry: any): string | null {
   if (entry.raw) {
     try {
       const parsed = typeof entry.raw === 'string' ? JSON.parse(entry.raw) : entry.raw
-      return parsed.level || parsed.severity || null
+      if (typeof parsed === 'object' && parsed !== null) {
+        if (typeof parsed.level === 'string' && parsed.level.length > 0) {
+          return parsed.level
+        }
+
+        if (typeof parsed.severity === 'string' && parsed.severity.length > 0) {
+          return parsed.severity
+        }
+
+        if (parsed.vercel && typeof parsed.vercel === 'object') {
+          const vercelLevel = (parsed.vercel as Record<string, unknown>).level
+          if (typeof vercelLevel === 'string' && vercelLevel.length > 0) {
+            return vercelLevel
+          }
+        }
+      }
+      return null
     } catch {
       // Check for common patterns
       const match = entry.raw.match(/\b(ERROR|WARN|WARNING|INFO|DEBUG|FATAL)\b/i)

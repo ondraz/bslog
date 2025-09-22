@@ -92,7 +92,12 @@ describe('Query Builder Integration', () => {
         level: 'error',
       })
 
-      expect(sql).toContain("WHERE getJSON(raw, 'level') = 'error'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.vercel.level')")
+      expect(sql).toContain(
+        "positionCaseInsensitive(COALESCE(JSONExtractString(raw, 'message'), JSON_VALUE(raw, '$.message')), 'error') > 0",
+      )
+      expect(sql).toContain("JSONHas(raw, 'error')")
+      expect(sql).toContain("toInt32OrZero(JSON_VALUE(raw, '$.vercel.proxy.status_code')) >= 500")
     })
 
     it('should build query with subsystem filter', async () => {
@@ -239,7 +244,7 @@ describe('Query Builder Integration', () => {
       expect(sql).toContain("SELECT dt, getJSON(raw, 'level') as level")
       expect(sql).toContain("getJSON(raw, 'message') as message")
       expect(sql).toContain("getJSON(raw, 'userId') as userId")
-      expect(sql).toContain("getJSON(raw, 'level') = 'error'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.vercel.level')")
       expect(sql).toContain("getJSON(raw, 'subsystem') = 'payment'")
       expect(sql).toContain('dt >= toDateTime64')
       expect(sql).toContain('dt <= toDateTime64')
@@ -261,7 +266,9 @@ describe('Query Builder Integration', () => {
       })
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Executing query: SELECT dt, raw FROM remote(t123456_test_source_logs)'),
+        expect.stringContaining(
+          'Executing query: SELECT dt, raw FROM remote(t123456_test_source_logs)',
+        ),
       )
 
       consoleSpy.mockRestore()
