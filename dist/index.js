@@ -10756,7 +10756,7 @@ class SourcesAPI {
 // src/api/query.ts
 var VALID_IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
 function escapeSqlString(value) {
-  return value.replace(/'/g, "''");
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "''");
 }
 
 class QueryAPI {
@@ -10774,52 +10774,66 @@ class QueryAPI {
     const segments = [];
     let buffer = "";
     let inBracket = false;
-    for (const char of trimmed) {
-      if (char === "[") {
-        if (!inBracket && buffer) {
-          segments.push(buffer);
-          buffer = "";
-        }
-        inBracket = true;
-        buffer += char;
-      } else if (char === "]") {
-        buffer += char;
+    let quoteChar = null;
+    const flushPlain = () => {
+      const segment = buffer.trim();
+      if (segment) {
+        segments.push(segment);
+      }
+      buffer = "";
+    };
+    const flushBracket = () => {
+      if (buffer) {
         segments.push(buffer);
-        buffer = "";
-        inBracket = false;
-      } else if (char === "." && !inBracket) {
-        if (buffer) {
-          segments.push(buffer);
-          buffer = "";
+      }
+      buffer = "";
+    };
+    for (let index = 0;index < trimmed.length; index += 1) {
+      const char = trimmed[index];
+      if (!inBracket) {
+        if (char === ".") {
+          flushPlain();
+          continue;
         }
-      } else {
+        if (char === "[") {
+          flushPlain();
+          inBracket = true;
+          buffer = "[";
+          quoteChar = null;
+          continue;
+        }
         buffer += char;
+        continue;
+      }
+      buffer += char;
+      if (char === '"' || char === "'") {
+        const previous = trimmed[index - 1];
+        if (quoteChar === char && previous !== "\\") {
+          quoteChar = null;
+        } else if (!quoteChar) {
+          quoteChar = char;
+        }
+      } else if (char === "]" && !quoteChar) {
+        flushBracket();
+        inBracket = false;
       }
     }
     if (buffer) {
-      segments.push(buffer);
+      if (inBracket) {
+        segments.push(buffer);
+      } else {
+        flushPlain();
+      }
     }
     let path = "$";
     for (const segment of segments) {
+      if (!segment) {
+        continue;
+      }
       if (segment.startsWith("[")) {
-        const inner = segment.slice(1, -1);
-        if (inner.length === 0) {
-          path += segment;
-          continue;
-        }
-        const quoteChar = inner[0];
-        const isQuoted = quoteChar === '"' || quoteChar === "'";
-        if (isQuoted && inner[inner.length - 1] === quoteChar) {
-          const key = inner.slice(1, -1);
-          const normalized = key.replace(/"/g, "\\\"");
-          path += `["${normalized}"]`;
-        } else {
-          path += `[${inner}]`;
-        }
-      } else if (VALID_IDENTIFIER_REGEX.test(segment)) {
-        path += `.${segment}`;
+        path += this.normalizeBracketSegment(segment);
       } else {
-        path += `["${segment.replace(/"/g, "\\\"")}"]`;
+        path += this.normalizePlainSegment(segment);
       }
     }
     return path;
@@ -10827,6 +10841,41 @@ class QueryAPI {
   buildJsonAccessor(field) {
     const path = this.buildJsonPath(field);
     return `JSON_VALUE(raw, '${path}')`;
+  }
+  normalizePlainSegment(segment) {
+    const cleaned = segment.trim();
+    if (!cleaned) {
+      return "";
+    }
+    if (VALID_IDENTIFIER_REGEX.test(cleaned)) {
+      return `.${cleaned}`;
+    }
+    const escaped = cleaned.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    return `["${escaped}"]`;
+  }
+  normalizeBracketSegment(segment) {
+    if (!segment.startsWith("[") || !segment.endsWith("]")) {
+      return this.normalizePlainSegment(segment);
+    }
+    const inner = segment.slice(1, -1).trim();
+    if (!inner) {
+      return segment;
+    }
+    if (inner === "*") {
+      return "[*]";
+    }
+    const quote = inner[0];
+    const isQuoted = quote === '"' || quote === "'";
+    if (isQuoted && inner[inner.length - 1] === quote) {
+      const key = inner.slice(1, -1).replace(/\\(['"])/g, "$1");
+      const escaped2 = key.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+      return `["${escaped2}"]`;
+    }
+    if (/^-?\d+$/.test(inner)) {
+      return `[${inner}]`;
+    }
+    const escaped = inner.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    return `["${escaped}"]`;
   }
   async buildQuery(options) {
     const config = loadConfig();
@@ -11460,6 +11509,74 @@ async function searchLogs(pattern, options) {
     search: pattern
   });
 }
+// package.json
+var package_default = {
+  name: "@steipete/bslog",
+  version: "1.0.3",
+  description: "Better Stack log query CLI with GraphQL-inspired syntax",
+  author: "steipete",
+  license: "MIT",
+  main: "dist/index.js",
+  type: "module",
+  scripts: {
+    dev: "bun run src/index.ts",
+    build: "bun build ./src/index.ts --compile --outfile dist/bslog",
+    "build:npm": "bun build ./src/index.ts --target node --outfile dist/index.js && chmod +x dist/index.js",
+    test: "bun test",
+    "test:unit": "bun test src/__tests__/unit",
+    "test:integration": "bun test src/__tests__/integration",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "type-check": "tsc --noEmit",
+    prepublishOnly: "bun run test && bun run build:npm",
+    lint: "biome check .",
+    "lint:fix": "biome check --write .",
+    format: "biome format --write ."
+  },
+  dependencies: {
+    chalk: "^5.6.0",
+    "cli-table3": "^0.6.5",
+    commander: "^14.0.0",
+    dotenv: "^17.2.1",
+    "node-fetch": "^3.3.2"
+  },
+  devDependencies: {
+    "@biomejs/biome": "^2.2.2",
+    "@types/bun": "^1.2.21",
+    "@types/node": "^24.3.0",
+    typescript: "^5.9.2"
+  },
+  bin: {
+    bslog: "dist/index.js"
+  },
+  files: [
+    "dist/",
+    "README.md"
+  ],
+  keywords: [
+    "betterstack",
+    "logs",
+    "cli",
+    "logging",
+    "graphql",
+    "query"
+  ],
+  repository: {
+    type: "git",
+    url: "git+https://github.com/steipete/bslog.git"
+  },
+  engines: {
+    bun: ">=1.0.0"
+  },
+  packageManager: "bun@1.2.16",
+  directories: {
+    doc: "docs"
+  },
+  bugs: {
+    url: "https://github.com/steipete/bslog/issues"
+  },
+  homepage: "https://github.com/steipete/bslog#readme"
+};
 
 // src/index.ts
 try {
@@ -11481,17 +11598,7 @@ try {
   }
 } catch {}
 var program2 = new Command;
-var cliVersion = "0.0.0";
-try {
-  const { readFileSync: readFileSync2 } = __require("fs");
-  const { dirname, join: join2 } = __require("path");
-  const { fileURLToPath } = __require("url");
-  const packageJsonPath = join2(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
-  const packageJson = JSON.parse(readFileSync2(packageJsonPath, "utf8"));
-  if (packageJson && typeof packageJson.version === "string") {
-    cliVersion = packageJson.version;
-  }
-} catch {}
+var cliVersion = typeof package_default.version === "string" ? package_default.version : "0.0.0";
 program2.name("bslog").description("Better Stack log query CLI with GraphQL-inspired syntax").version(cliVersion);
 program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
   await runQuery(query, options);

@@ -6,6 +6,7 @@ import { setConfig, showConfig } from './commands/config'
 import { runQuery, runSql } from './commands/query'
 import { getSource, listSources } from './commands/sources'
 import { searchLogs, showErrors, showWarnings, tailLogs } from './commands/tail'
+import packageJson from '../package.json' assert { type: 'json' }
 
 // Try to load .env file if it exists (for local development)
 // But don't use dotenv package to avoid debug messages
@@ -31,19 +32,7 @@ try {
 
 const program = new Command()
 
-let cliVersion = '0.0.0'
-try {
-  const { readFileSync } = require('node:fs')
-  const { dirname, join } = require('node:path')
-  const { fileURLToPath } = require('node:url')
-  const packageJsonPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json')
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-  if (packageJson && typeof packageJson.version === 'string') {
-    cliVersion = packageJson.version
-  }
-} catch {
-  // Default will remain 0.0.0 if package metadata cannot be loaded
-}
+const cliVersion = typeof packageJson.version === 'string' ? packageJson.version : '0.0.0'
 
 program
   .name('bslog')
