@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Hardened SQL escaping for search and `where` values that contain quotes or backslashes.
 - Expanded integration coverage for nested selections, array indexes, complex keys, and structured-object comparisons.
 - Documented the JSON path syntax in the README and published the CLI update.
+- Embedded the package version so both the Node entrypoint and compiled binary report the same release number.
 
 ## [1.0.2] - 2025-09-22
 - CLI now resolves its version straight from `package.json`, keeping `bslog --version` and help output in sync with published builds.
@@ -22,4 +23,3 @@ All notable changes to this project will be documented in this file.
 ## [1.0.0] - 2025-09-03
 - First public release of the Better Stack log CLI with GraphQL-inspired queries, tail/errors/warnings/search helpers, source management, and pretty/JSON/CSV output formats.
 - Shipped initial formatter, time utilities, configuration management, and strict Biome linting setup.
-
