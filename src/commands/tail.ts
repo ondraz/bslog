@@ -1,5 +1,5 @@
-import chalk from 'chalk'
 import { spawnSync } from 'node:child_process'
+import chalk from 'chalk'
 import { QueryAPI } from '../api/query'
 import type { LogEntry, QueryOptions } from '../types'
 import { loadConfig, resolveSourceAlias } from '../utils/config'
@@ -19,9 +19,10 @@ type TailRuntimeOptions = {
   jq?: string
 }
 
-type TailOptions = QueryOptions & TailRuntimeOptions & {
-  sources?: string[]
-}
+type TailOptions = QueryOptions &
+  TailRuntimeOptions & {
+    sources?: string[]
+  }
 
 type LogEntryWithSource = LogEntry & { source: string }
 
@@ -76,8 +77,9 @@ export async function tailLogs(options: TailOptions): Promise<void> {
 
     queryOptions.source = undefined
     await runMultiSource(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources])
-  } catch (error: any) {
-    console.error(chalk.red(`Tail error: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`Tail error: ${message}`))
     process.exit(1)
   }
 }
@@ -119,15 +121,18 @@ async function runSingleSource(
         return
       }
 
-      const filtered = lastTimestamp ? newResults.filter((entry) => entry.dt > lastTimestamp!) : newResults
+      const filtered = lastTimestamp
+        ? newResults.filter((entry) => entry.dt > lastTimestamp)
+        : newResults
       if (filtered.length === 0) {
         return
       }
 
       printResults(filtered, outputFormat, runtime.jq)
       lastTimestamp = filtered[0].dt
-    } catch (error: any) {
-      console.error(chalk.red(`Polling error: ${error.message}`))
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(chalk.red(`Polling error: ${message}`))
     }
   }, intervalMs)
 
@@ -160,8 +165,7 @@ async function runMultiSource(
         limit: limitPerSource,
       }
 
-      const sinceCandidate =
-        (sinceMap && sinceMap.get(source)) ?? baseOptions.since ?? fallbackSince
+      const sinceCandidate = sinceMap?.get(source) ?? baseOptions.since ?? fallbackSince
       perSourceOptions.since = sinceCandidate || undefined
 
       const result = await api.execute(perSourceOptions)
@@ -174,7 +178,9 @@ async function runMultiSource(
     }
 
     combined.sort((a, b) => {
-      if (a.dt === b.dt) return 0
+      if (a.dt === b.dt) {
+        return 0
+      }
       return a.dt < b.dt ? 1 : -1
     })
 
@@ -227,8 +233,9 @@ async function runMultiSource(
           perSourceLatest.set(source, dt)
         }
       }
-    } catch (error: any) {
-      console.error(chalk.red(`Polling error: ${error.message}`))
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(chalk.red(`Polling error: ${message}`))
     }
   }, intervalMs)
 
@@ -266,15 +273,17 @@ function normalizeLimit(limit?: number): number {
   return 100
 }
 
-export async function showErrors(options: QueryOptions & { format?: string; sources?: string[] }): Promise<void> {
+export function showErrors(
+  options: QueryOptions & { format?: string; sources?: string[]; jq?: string },
+): Promise<void> {
   return tailLogs({
     ...options,
     level: 'error',
   })
 }
 
-export async function showWarnings(
-  options: QueryOptions & { format?: string; sources?: string[] },
+export function showWarnings(
+  options: QueryOptions & { format?: string; sources?: string[]; jq?: string },
 ): Promise<void> {
   return tailLogs({
     ...options,
@@ -282,9 +291,9 @@ export async function showWarnings(
   })
 }
 
-export async function searchLogs(
+export function searchLogs(
   pattern: string,
-  options: QueryOptions & { format?: string; sources?: string[] },
+  options: QueryOptions & { format?: string; sources?: string[]; jq?: string },
 ): Promise<void> {
   return tailLogs({
     ...options,
@@ -328,8 +337,9 @@ function printResults(entries: LogEntry[], format: OutputFormat, jqFilter?: stri
     if (!output.endsWith('\n')) {
       process.stdout.write('\n')
     }
-  } catch (error: any) {
-    console.error(chalk.red(`jq integration error: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`jq integration error: ${message}`))
     console.log(payload)
   }
 }

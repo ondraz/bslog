@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Added `--jq <filter>` to tail/errors/warnings/search/trace for inline JSON shaping via jq.
 - Results auto-switch to JSON when jq filters are present, with graceful fallbacks if jq is missing.
 - Documented jq usage in README and CLI help.
+- Consolidated log commands behind a shared registration helper so options and runtime parsing stay consistent.
+- Tightened Biome rules (no-default-export, namespaces) and updated tests/utilities to satisfy the stricter lint pass.
 
 ## [1.2.0] - 2025-09-24
 - Added `--until` flags to tail/errors/warnings/search so fixed windows can be queried without manual reruns.

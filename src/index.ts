@@ -2,13 +2,13 @@
 
 import chalk from 'chalk'
 import { Command } from 'commander'
+import packageJson from '../package.json'
 import { setConfig, showConfig } from './commands/config'
 import { runQuery, runSql } from './commands/query'
 import { getSource, listSources } from './commands/sources'
 import { searchLogs, showErrors, showWarnings, tailLogs } from './commands/tail'
 import { traceRequest } from './commands/trace'
-import { resolveRuntimeOptions } from './utils/options'
-import packageJson from '../package.json' assert { type: 'json' }
+import { mergeWithRuntime, registerLogCommand } from './utils/command-factory'
 
 // Try to load .env file if it exists (for local development)
 // But don't use dotenv package to avoid debug messages
@@ -41,8 +41,9 @@ program
   .description('Better Stack log query CLI with GraphQL-inspired syntax')
   .version(cliVersion)
 
-function collectFilters(value: string, previous: string[] = []): string[] {
-  return [...previous, value]
+function extractStringOption(options: Record<string, unknown>, key: string): string | undefined {
+  const value = options[key]
+  return typeof value === 'string' ? value : undefined
 }
 
 // Query command - GraphQL-like syntax
@@ -51,7 +52,6 @@ program
   .argument('<query>', 'GraphQL-like query string')
   .option('-s, --source <name>', 'Source name')
   .option('-f, --format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Query logs using GraphQL-like syntax')
   .action(async (query, options) => {
@@ -70,144 +70,97 @@ program
   })
 
 // Tail command - stream logs
-program
-  .command('tail [source]')
-  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
-  .option('-l, --level <level>', 'Filter by log level')
-  .option('--subsystem <name>', 'Filter by subsystem')
-  .option('--since <time>', 'Show logs since (e.g., 1h, 2d, 2024-01-01)')
-  .option('--until <time>', 'Show logs until (e.g., 2024-01-01T12:00)')
-  .option('-f, --follow', 'Follow log output')
-  .option('--interval <ms>', 'Polling interval in milliseconds', '2000')
-  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--sources <names>', 'Comma-separated list of sources to merge')
-  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
-  .option('-v, --verbose', 'Show SQL query and debug information')
-  .description(
+registerLogCommand(program, {
+  name: 'tail',
+  description:
     'Tail logs (similar to tail -f)\nExamples:\n  bslog tail                    # use default source\n  bslog tail sweetistics-dev    # use specific source\n  bslog tail prod -n 50         # tail production logs',
-  )
-  .action(async (source, options) => {
-    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
-
-    await tailLogs({
-      ...rest,
-      source: source || options.source,
-      sources,
-      limit,
-      where,
-      jq,
-    })
-  })
+  arguments: [{ declaration: '[source]', description: 'Source name or alias' }],
+  setup: (cmd) => {
+    cmd
+      .option('-l, --level <level>', 'Filter by log level')
+      .option('--subsystem <name>', 'Filter by subsystem')
+      .option('-f, --follow', 'Follow log output')
+      .option('--interval <ms>', 'Polling interval in milliseconds', '2000')
+  },
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args
+    const sourceOption = extractStringOption(options, 'source')
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption,
+    }) as Parameters<typeof tailLogs>[0]
+    await tailLogs(merged)
+  },
+})
 
 // Errors command - show only errors
-program
-  .command('errors [source]')
-  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
-  .option('--since <time>', 'Show errors since (e.g., 1h, 2d)')
-  .option('--until <time>', 'Show errors until (e.g., 2024-01-01T12:00)')
-  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--sources <names>', 'Comma-separated list of sources to merge')
-  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
-  .option('-v, --verbose', 'Show SQL query and debug information')
-  .description(
+registerLogCommand(program, {
+  name: 'errors',
+  description:
     'Show only error logs\nExamples:\n  bslog errors                  # use default source\n  bslog errors sweetistics-dev  # errors from dev\n  bslog errors prod --since 1h  # recent prod errors',
-  )
-  .action(async (source, options) => {
-    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
-
-    await showErrors({
-      ...rest,
-      source: source || options.source,
-      sources,
-      limit,
-      where,
-      jq,
-    })
-  })
+  arguments: [{ declaration: '[source]', description: 'Source name or alias' }],
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args
+    const sourceOption = extractStringOption(options, 'source')
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption,
+    }) as Parameters<typeof showErrors>[0]
+    await showErrors(merged)
+  },
+})
 
 // Warnings command - show only warnings
-program
-  .command('warnings [source]')
-  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
-  .option('--since <time>', 'Show warnings since (e.g., 1h, 2d)')
-  .option('--until <time>', 'Show warnings until (e.g., 2024-01-01T12:00)')
-  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--sources <names>', 'Comma-separated list of sources to merge')
-  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
-  .option('-v, --verbose', 'Show SQL query and debug information')
-  .description('Show only warning logs')
-  .action(async (source, options) => {
-    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
-
-    await showWarnings({
-      ...rest,
-      source: source || options.source,
-      sources,
-      limit,
-      where,
-      jq,
-    })
-  })
+registerLogCommand(program, {
+  name: 'warnings',
+  description: 'Show only warning logs',
+  arguments: [{ declaration: '[source]', description: 'Source name or alias' }],
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args
+    const sourceOption = extractStringOption(options, 'source')
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption,
+    }) as Parameters<typeof showWarnings>[0]
+    await showWarnings(merged)
+  },
+})
 
 // Search command - search logs
-program
-  .command('search <pattern> [source]')
-  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
-  .option('-l, --level <level>', 'Filter by log level')
-  .option('--since <time>', 'Search logs since (e.g., 1h, 2d)')
-  .option('--until <time>', 'Search logs until (e.g., 2024-01-01T12:00)')
-  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--sources <names>', 'Comma-separated list of sources to merge')
-  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
-  .option('-v, --verbose', 'Show SQL query and debug information')
-  .description(
+registerLogCommand(program, {
+  name: 'search',
+  description:
     'Search logs for a pattern\nExamples:\n  bslog search "error"                    # search in default source\n  bslog search "error" sweetistics-dev    # search in dev\n  bslog search "timeout" prod --since 1h  # search recent prod logs',
-  )
-  .action(async (pattern, source, options) => {
-    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
+  arguments: [
+    { declaration: '<pattern>', description: 'Substring or expression to search for' },
+    { declaration: '[source]', description: 'Source name or alias' },
+  ],
+  setup: (cmd) => {
+    cmd.option('-l, --level <level>', 'Filter by log level')
+  },
+  handler: async ({ args, runtime, options }) => {
+    const [pattern, sourceArg] = args
+    const sourceOption = extractStringOption(options, 'source')
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption,
+    }) as Parameters<typeof searchLogs>[1]
+    await searchLogs(pattern, merged)
+  },
+})
 
-    await searchLogs(pattern, {
-      ...rest,
-      source: source || options.source,
-      sources,
-      limit,
-      where,
-      jq,
-    })
-  })
-
-program
-  .command('trace <requestId> [source]')
-  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
-  .option('--since <time>', 'Show logs since (e.g., 1h, 2d, 2024-01-01)')
-  .option('--until <time>', 'Show logs until (e.g., 2024-01-01)')
-  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
-  .option('--sources <names>', 'Comma-separated list of sources to merge')
-  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
-  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
-  .option('-v, --verbose', 'Show SQL query and debug information')
-  .description('Fetch all logs sharing a requestId across one or more sources')
-  .action(async (requestId, source, options) => {
-    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
-
-    await traceRequest(requestId, {
-      ...rest,
-      source: source || options.source,
-      sources,
-      limit,
-      where,
-      jq,
-    })
-  })
+registerLogCommand(program, {
+  name: 'trace',
+  description: 'Fetch all logs sharing a requestId across one or more sources',
+  arguments: [
+    { declaration: '<requestId>', description: 'Request identifier to trace' },
+    { declaration: '[source]', description: 'Source name or alias' },
+  ],
+  handler: async ({ args, runtime, options }) => {
+    const [requestId, sourceArg] = args
+    const sourceOption = extractStringOption(options, 'source')
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption,
+    }) as Parameters<typeof traceRequest>[1]
+    await traceRequest(requestId, merged)
+  },
+})
 
 // Sources command group
 const sources = program.command('sources').description('Manage log sources')
@@ -273,7 +226,9 @@ program.on('--help', () => {
   console.log('  $ bslog tail -f                       # Follow logs')
   console.log('  $ bslog errors --since 1h             # Errors from last hour')
   console.log('  $ bslog search "authentication failed"')
-  console.log('  $ bslog search "timeline" --where module=timeline --where env=production --until 2025-09-24T18:00')
+  console.log(
+    '  $ bslog search "timeline" --where module=timeline --where env=production --until 2025-09-24T18:00',
+  )
   console.log("  $ bslog tail --format json --jq '.[] | {dt, message}'")
   console.log('')
   console.log('  # Sources:')

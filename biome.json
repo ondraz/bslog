@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -50,8 +50,8 @@
         "noDangerouslySetInnerHtmlWithChildren": "error"
       },
       "style": {
-        "noDefaultExport": "off",
-        "noNamespace": "warn",
+        "noDefaultExport": "error",
+        "noNamespace": "error",
         "noNegationElse": "error",
         "noParameterAssign": "error",
         "noRestrictedGlobals": "error",

@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 
-const tailLogsMock = mock(async (_options: any) => {})
+const tailLogsMock = mock((options: Record<string, unknown>) => Promise.resolve(options))
 
 const { traceRequest } = await import('../../commands/trace')
 
@@ -19,7 +19,10 @@ describe('traceRequest', () => {
     )
 
     expect(tailLogsMock.mock.calls.length).toBe(1)
-    const callOptions = tailLogsMock.mock.calls[0][0]
+    const callOptions = tailLogsMock.mock.calls[0][0] as {
+      where?: Record<string, unknown>
+      sources?: unknown
+    }
 
     expect(callOptions.where).toEqual({ module: 'api', requestId: 'abc-123' })
     expect(callOptions.sources).toEqual(['dev'])
