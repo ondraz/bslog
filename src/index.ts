@@ -6,6 +6,8 @@ import { setConfig, showConfig } from './commands/config'
 import { runQuery, runSql } from './commands/query'
 import { getSource, listSources } from './commands/sources'
 import { searchLogs, showErrors, showWarnings, tailLogs } from './commands/tail'
+import { traceRequest } from './commands/trace'
+import { resolveRuntimeOptions } from './utils/options'
 import packageJson from '../package.json' assert { type: 'json' }
 
 // Try to load .env file if it exists (for local development)
@@ -38,6 +40,10 @@ program
   .name('bslog')
   .description('Better Stack log query CLI with GraphQL-inspired syntax')
   .version(cliVersion)
+
+function collectFilters(value: string, previous: string[] = []): string[] {
+  return [...previous, value]
+}
 
 // Query command - GraphQL-like syntax
 program
@@ -72,15 +78,22 @@ program
   .option('-f, --follow', 'Follow log output')
   .option('--interval <ms>', 'Polling interval in milliseconds', '2000')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--sources <names>', 'Comma-separated list of sources to merge')
+  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Tail logs (similar to tail -f)\nExamples:\n  bslog tail                    # use default source\n  bslog tail sweetistics-dev    # use specific source\n  bslog tail prod -n 50         # tail production logs',
   )
   .action(async (source, options) => {
+    const { limit, sources, where } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+
     await tailLogs({
-      ...options,
+      ...rest,
       source: source || options.source,
-      limit: Number.parseInt(options.limit, 10),
+      sources,
+      limit,
+      where,
     })
   })
 
@@ -90,15 +103,22 @@ program
   .option('-n, --limit <number>', 'Number of logs to fetch', '100')
   .option('--since <time>', 'Show errors since (e.g., 1h, 2d)')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--sources <names>', 'Comma-separated list of sources to merge')
+  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Show only error logs\nExamples:\n  bslog errors                  # use default source\n  bslog errors sweetistics-dev  # errors from dev\n  bslog errors prod --since 1h  # recent prod errors',
   )
   .action(async (source, options) => {
+    const { limit, sources, where } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+
     await showErrors({
-      ...options,
+      ...rest,
       source: source || options.source,
-      limit: Number.parseInt(options.limit, 10),
+      sources,
+      limit,
+      where,
     })
   })
 
@@ -108,13 +128,20 @@ program
   .option('-n, --limit <number>', 'Number of logs to fetch', '100')
   .option('--since <time>', 'Show warnings since (e.g., 1h, 2d)')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--sources <names>', 'Comma-separated list of sources to merge')
+  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Show only warning logs')
   .action(async (source, options) => {
+    const { limit, sources, where } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+
     await showWarnings({
-      ...options,
+      ...rest,
       source: source || options.source,
-      limit: Number.parseInt(options.limit, 10),
+      sources,
+      limit,
+      where,
     })
   })
 
@@ -125,15 +152,45 @@ program
   .option('-l, --level <level>', 'Filter by log level')
   .option('--since <time>', 'Search logs since (e.g., 1h, 2d)')
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--sources <names>', 'Comma-separated list of sources to merge')
+  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Search logs for a pattern\nExamples:\n  bslog search "error"                    # search in default source\n  bslog search "error" sweetistics-dev    # search in dev\n  bslog search "timeout" prod --since 1h  # search recent prod logs',
   )
   .action(async (pattern, source, options) => {
+    const { limit, sources, where } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+
     await searchLogs(pattern, {
-      ...options,
+      ...rest,
       source: source || options.source,
-      limit: Number.parseInt(options.limit, 10),
+      sources,
+      limit,
+      where,
+    })
+  })
+
+program
+  .command('trace <requestId> [source]')
+  .option('-n, --limit <number>', 'Number of logs to fetch', '100')
+  .option('--since <time>', 'Show logs since (e.g., 1h, 2d, 2024-01-01)')
+  .option('--until <time>', 'Show logs until (e.g., 2024-01-01)')
+  .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--sources <names>', 'Comma-separated list of sources to merge')
+  .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('-v, --verbose', 'Show SQL query and debug information')
+  .description('Fetch all logs sharing a requestId across one or more sources')
+  .action(async (requestId, source, options) => {
+    const { limit, sources, where } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+
+    await traceRequest(requestId, {
+      ...rest,
+      source: source || options.source,
+      sources,
+      limit,
+      where,
     })
   })
 
@@ -171,9 +228,10 @@ config
 
 config
   .command('show')
+  .option('-f, --format <type>', 'Output format (json|pretty)', 'pretty')
   .description('Show current configuration')
-  .action(() => {
-    showConfig()
+  .action((options) => {
+    showConfig(options)
   })
 
 // Default source shorthand
@@ -200,6 +258,7 @@ program.on('--help', () => {
   console.log('  $ bslog tail -f                       # Follow logs')
   console.log('  $ bslog errors --since 1h             # Errors from last hour')
   console.log('  $ bslog search "authentication failed"')
+  console.log('  $ bslog search "timeline" --where module=timeline --where env=production')
   console.log('')
   console.log('  # Sources:')
   console.log('  $ bslog sources list                  # List all sources')

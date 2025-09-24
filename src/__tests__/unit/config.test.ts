@@ -1,8 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { existsSync, mkdirSync, rmSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 import { addToHistory, loadConfig, saveConfig, updateConfig } from '../../utils/config'
+import { showConfig } from '../../commands/config'
 
 describe('Config Utilities', () => {
   const CONFIG_DIR = join(homedir(), '.bslog')
@@ -212,7 +213,7 @@ describe('Config Utilities', () => {
     it('should return empty object when credentials are not set', () => {
       const originalUsername = process.env.BETTERSTACK_QUERY_USERNAME
       const originalPassword = process.env.BETTERSTACK_QUERY_PASSWORD
-      
+
       delete process.env.BETTERSTACK_QUERY_USERNAME
       delete process.env.BETTERSTACK_QUERY_PASSWORD
 
@@ -230,7 +231,7 @@ describe('Config Utilities', () => {
     it('should return credentials when environment variables are set', () => {
       const testUsername = 'test_user'
       const testPassword = 'test_pass'
-      
+
       process.env.BETTERSTACK_QUERY_USERNAME = testUsername
       process.env.BETTERSTACK_QUERY_PASSWORD = testPassword
 
@@ -244,7 +245,7 @@ describe('Config Utilities', () => {
     it('should return partial credentials if only one is set', () => {
       const originalUsername = process.env.BETTERSTACK_QUERY_USERNAME
       const originalPassword = process.env.BETTERSTACK_QUERY_PASSWORD
-      
+
       process.env.BETTERSTACK_QUERY_USERNAME = 'test_user'
       delete process.env.BETTERSTACK_QUERY_PASSWORD
 
@@ -291,6 +292,48 @@ describe('Config Utilities', () => {
 
     it('should handle empty string', () => {
       expect(resolveSourceAlias('')).toBe('')
+    })
+  })
+
+  describe('showConfig', () => {
+    const originalLog = console.log
+    const originalError = console.error
+    let logSpy: ReturnType<typeof mock>
+    let errorSpy: ReturnType<typeof mock>
+
+    beforeEach(() => {
+      logSpy = mock(() => {})
+      errorSpy = mock(() => {})
+      console.log = logSpy as unknown as typeof console.log
+      console.error = errorSpy as unknown as typeof console.error
+    })
+
+    afterEach(() => {
+      console.log = originalLog
+      console.error = originalError
+    })
+
+    it('should output JSON when requested', () => {
+      const sampleConfig = {
+        defaultSource: 'api-prod',
+        defaultLimit: 250,
+        outputFormat: 'pretty' as const,
+        queryHistory: ['{ logs(limit: 10) { * } }'],
+        savedQueries: { recentErrors: '{ logs(level: "error", limit: 20) { dt } }' },
+      }
+
+      saveConfig(sampleConfig)
+      showConfig({ format: 'json' })
+
+      expect(logSpy.mock.calls.length).toBe(1)
+      const payload = JSON.parse(logSpy.mock.calls[0][0] as string)
+
+      expect(payload.defaultSource).toBe('api-prod')
+      expect(payload.defaultLimit).toBe(250)
+      expect(payload.outputFormat).toBe('pretty')
+      expect(payload.savedQueries.recentErrors).toContain('limit: 20')
+      expect(payload.queryHistory).toEqual(sampleConfig.queryHistory)
+      expect(errorSpy.mock.calls.length).toBe(0)
     })
   })
 })

@@ -8,17 +8,6 @@ A powerful, intuitive CLI tool for querying Better Stack logs with GraphQL-inspi
 
 ## Features
 
-## Better Stack MCP vs bslog CLI
-
-Better Stack's MCP (Model Context Protocol) endpoints expose the same log storage that bslog queries, but they serve different workflows. Reference the [official MCP integration guide](https://betterstack.com/docs/getting-started/integrations/mcp/) for setup, and use the two side by side:
-
-- **Token footprint matters.** The stock MCP ships ~50 tools and consumes roughly 7 k tokens of system context before it does any useful work. If you need lean prompts or run on constrained models, that overhead is noticeable.
-
-- **Lean on MCP for quick context in chat-based tooling.** Assistants can run small ClickHouse snippets via MCP to summarize recent events without leaving the conversation.
-- **Reach for bslog when you need the full payload.** CLI commands stream nested JSON fields, respect your saved defaults, and integrate with pipes/`jq` for deeper debugging.
-- **Consider credential flow.** MCP sessions often require short-lived "Connect remotely" credentials, while bslog reads long-lived environment variables once per machine.
-- **Collaborate with both.** Share MCP snapshots with teammates for at-a-glance status, then dive into bslog to follow requests, inspect stack traces, or automate reporting.
-
 - **GraphQL-inspired query syntax** - Write queries that feel natural and are easy to remember
 - **Simple commands** - Common operations like `tail`, `errors`, `search` work out of the box
 - **Smart filtering** - Filter by level, subsystem, time ranges, or any JSON field
@@ -28,6 +17,41 @@ Better Stack's MCP (Model Context Protocol) endpoints expose the same log storag
 - **Real-time following** - Tail logs in real-time with `-f` flag
 - **Query history** - Saves your queries for quick re-use
 - **Configurable** - Set defaults for source, output format, and more
+- **Responsive networking** - Uses the native Fetch API with sane timeouts so hung connections never stall your session
+
+## Better Stack MCP vs bslog CLI
+
+Better Stack's MCP (Model Context Protocol) endpoints expose the same log storage that bslog queries, but they serve different workflows. Reference the [official MCP integration guide](https://betterstack.com/docs/getting-started/integrations/mcp/) for setup, and use the two side by side:
+
+- **Token footprint matters.** The stock MCP ships ~50 tools and consumes roughly 7 k tokens of system context before it does any useful work. If you need lean prompts or run on constrained models, that overhead is noticeable.
+- **Lean on MCP for quick context in chat-based tooling.** Assistants can run small ClickHouse snippets via MCP to summarize recent events without leaving the conversation.
+- **Reach for bslog when you need the full payload.** CLI commands stream nested JSON fields, respect your saved defaults, and integrate with pipes/`jq` for deeper debugging.
+- **Consider credential flow.** MCP sessions often require short-lived "Connect remotely" credentials, while bslog reads long-lived environment variables once per machine.
+- **Collaborate with both.** Share MCP snapshots with teammates for at-a-glance status, then dive into bslog to follow requests, inspect stack traces, or automate reporting.
+
+| Reach for MCP when you need... | Reach for bslog CLI when you need... |
+| --- | --- |
+| Lightweight, conversational context inline with an AI assistant | Full-fidelity log payloads, streaming output, and piping into local tooling |
+| Quick summaries or counts across a narrow time window | Chronological drill-down across multiple sources with `--sources dev,prod` |
+| Temporary credentials you can rotate per debugging session | Long-lived local credentials stored in your shell profile |
+| Remote teammates to reproduce a query in their chat workspace | Automation or scripting from CI/cron with reproducible output formats |
+
+### Field-aware filters built in
+
+Skip raw SQL when you need structured filters—every tail/search/errors/warnings/trace command now accepts `--where key=value`. Repeat the flag to chain predicates:
+
+```bash
+bslog search "timeline" --where module=timeline --where env=production --since 1h
+bslog tail prod --where userId='0199abc' --where attempt=3
+```
+
+Filters perform equality matches; values auto-detect booleans (`true`/`false`), numbers, `null`, quoted strings, and JSON objects/arrays.
+
+### Still on the roadmap
+
+- Aggregations and histograms (like the bar chart in Telemetry Explore) aren’t built in yet—pipe `--format json` into your own tooling if you need counts per interval.
+- There is no `--until` flag for absolute end times; combine `--since` with a quick follow-up query if you need a fixed window.
+- The pretty printer shows entire JSON arrays; use `--format json` plus `jq` to collapse noisy sections until native collapsing lands.
 
 ## Installation
 
@@ -253,6 +277,7 @@ Options:
   -f, --follow            Follow log output
   --interval <ms>         Polling interval in milliseconds (default: 2000)
   --format <type>         Output format (json|table|csv|pretty)
+  --sources <names>       Comma-separated list of sources to merge chronologically
   -v, --verbose           Show SQL query and debug information
 
 Examples:
@@ -260,7 +285,10 @@ Examples:
   bslog tail -f                        # Follow logs
   bslog tail -v                        # Show SQL queries
   bslog tail --since 1h --level error  # Errors from last hour
+  bslog tail --sources dev,prod        # Merge logs from multiple sources chronologically
 ```
+
+When you pass multiple names to `--sources`, bslog issues concurrent queries, merges the results in strict timestamp order, and augments every row with a `source` field. The combined output works with all formatters (`pretty`, `json`, `table`, `csv`) and keeps follow mode responsive by polling each source independently.
 
 #### `errors` - Show only error logs
 ```bash
@@ -271,6 +299,7 @@ Options:
   -s, --source <name>     Source name
   --since <time>          Show errors since
   --format <type>         Output format
+  --sources <names>       Comma-separated list of sources to merge chronologically
 
 Examples:
   bslog errors --since 1h              # Errors from last hour
@@ -294,11 +323,30 @@ Options:
   -l, --level <level>     Filter by log level
   --since <time>          Search logs since
   --format <type>         Output format
+  --sources <names>       Comma-separated list of sources to merge chronologically
 
 Examples:
   bslog search "authentication failed"
   bslog search "user:john@example.com" --level error
   bslog search "timeout" --since 1h --subsystem api
+```
+
+#### `trace` - Follow a request ID across sources
+```bash
+bslog trace <requestId> [options]
+
+Options:
+  -n, --limit <number>    Number of logs to fetch (default: 100)
+  -s, --source <name>     Source name
+  --since <time>          Show logs since
+  --until <time>          Show logs until
+  --format <type>         Output format (json|table|csv|pretty)
+  --sources <names>       Comma-separated list of sources to merge chronologically
+  -v, --verbose           Show SQL query and debug information
+
+Examples:
+  bslog trace 01HXABCDEF --sources dev,prod
+  bslog trace req-123 --since 1h
 ```
 
 #### `query` - GraphQL-inspired queries
@@ -391,6 +439,7 @@ Examples:
 #### `config show` - Show current configuration
 ```bash
 bslog config show
+bslog config show --format json
 ```
 
 #### `config source` - Shorthand for setting default source

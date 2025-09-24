@@ -1,6 +1,10 @@
 import chalk from 'chalk'
 import { loadConfig, updateConfig } from '../utils/config'
 
+type ShowConfigOptions = {
+  format?: string
+}
+
 export function setConfig(key: string, value: string): void {
   const validKeys = ['source', 'limit', 'format']
 
@@ -41,8 +45,21 @@ export function setConfig(key: string, value: string): void {
   }
 }
 
-export function showConfig(): void {
+export function showConfig(options: ShowConfigOptions = {}): void {
   const config = loadConfig()
+
+  if (options.format === 'json') {
+    const normalized = {
+      defaultSource: config.defaultSource ?? null,
+      defaultLimit: config.defaultLimit ?? 100,
+      outputFormat: config.outputFormat ?? 'json',
+      savedQueries: config.savedQueries ?? {},
+      queryHistory: config.queryHistory ?? [],
+    }
+
+    console.log(JSON.stringify(normalized, null, 2))
+    return
+  }
 
   console.log(chalk.bold('\nCurrent Configuration:\n'))
   console.log(`Default Source: ${config.defaultSource || chalk.gray('(not set)')}`)
