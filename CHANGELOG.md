@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - No unreleased changes.
 
+## [1.3.0] - 2025-09-24
+- Added `--jq <filter>` to tail/errors/warnings/search/trace for inline JSON shaping via jq.
+- Results auto-switch to JSON when jq filters are present, with graceful fallbacks if jq is missing.
+- Documented jq usage in README and CLI help.
+
 ## [1.2.0] - 2025-09-24
 - Added `--until` flags to tail/errors/warnings/search so fixed windows can be queried without manual reruns.
 - Updated CLI help and docs with bounded-window examples.

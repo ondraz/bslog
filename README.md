@@ -55,10 +55,20 @@ Combine `--since` and the new `--until` flag on any tail/errors/warnings/search/
 bslog tail prod --since 2025-09-24T13:00 --until 2025-09-24T14:00
 ```
 
+### Lightweight shaping with jq
+
+Use `--format json --jq '<filter>'` to trim or reshape large payloads without leaving the terminal.
+
+```bash
+bslog tail prod --format json --jq '.[].message' --limit 20
+bslog search "timeout" --format json --jq '[.[] | {dt, message}]'
+```
+
+The CLI automatically switches to JSON when `--jq` is provided; if `jq` is missing, the raw JSON payload is printed instead with an error message.
+
 ### Still on the roadmap
 
 - Aggregations and histograms (like the bar chart in Telemetry Explore) aren’t built in yet—pipe `--format json` into your own tooling if you need counts per interval.
-- For heavy payloads, switch to `--format json` and shape the output with `jq` (e.g., `jq '.[].message'`) to trim down large arrays or nested structures.
 
 ## Installation
 

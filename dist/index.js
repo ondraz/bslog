@@ -5502,10 +5502,11 @@ function formatBytes(bytes) {
 }
 
 // src/commands/tail.ts
+import { spawnSync } from "node:child_process";
 async function tailLogs(options) {
   const api = new QueryAPI;
   const config = loadConfig();
-  const { follow, interval, format, sources: multiSourceOption, ...queryOptions } = options;
+  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options;
   const limit = normalizeLimit(queryOptions.limit);
   queryOptions.limit = limit;
   const resolvedSource = resolveSourceAlias(queryOptions.source);
@@ -5538,22 +5539,22 @@ async function tailLogs(options) {
       if (queryOptions.source === undefined) {
         queryOptions.source = resolvedSource;
       }
-      await runSingleSource(api, queryOptions, { follow, interval, format });
+      await runSingleSource(api, queryOptions, { follow, interval, format, jq });
       return;
     }
     queryOptions.source = undefined;
-    await runMultiSource(api, queryOptions, { follow, interval, format }, [...resolvedSources]);
+    await runMultiSource(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources]);
   } catch (error) {
     console.error(source_default2.red(`Tail error: ${error.message}`));
     process.exit(1);
   }
 }
 async function runSingleSource(api, options, runtime) {
-  const outputFormat = resolveFormat(runtime.format);
+  const outputFormat = resolveFormat(runtime.format, runtime.jq);
   let lastTimestamp = null;
   const results = await api.execute(options);
   if (results.length > 0) {
-    console.log(formatOutput(results, outputFormat));
+    printResults(results, outputFormat, runtime.jq);
     lastTimestamp = results[0].dt;
   }
   if (!runtime.follow) {
@@ -5579,7 +5580,7 @@ Following logs... (Press Ctrl+C to stop)`));
       if (filtered.length === 0) {
         return;
       }
-      console.log(formatOutput(filtered, outputFormat));
+      printResults(filtered, outputFormat, runtime.jq);
       lastTimestamp = filtered[0].dt;
     } catch (error) {
       console.error(source_default2.red(`Polling error: ${error.message}`));
@@ -5588,7 +5589,7 @@ Following logs... (Press Ctrl+C to stop)`));
   process.stdin.resume();
 }
 async function runMultiSource(api, baseOptions, runtime, sources) {
-  const outputFormat = resolveFormat(runtime.format);
+  const outputFormat = resolveFormat(runtime.format, runtime.jq);
   const limit = baseOptions.limit ?? 100;
   const perSourceLatest = new Map;
   const collect = async (sinceMap, limitOverride, fallbackSince2) => {
@@ -5626,7 +5627,7 @@ async function runMultiSource(api, baseOptions, runtime, sources) {
     perSourceLatest.set(source, dt);
   }
   if (initialCombined.length > 0) {
-    console.log(formatOutput(initialCombined, outputFormat));
+    printResults(initialCombined, outputFormat, runtime.jq);
   }
   if (!runtime.follow) {
     return;
@@ -5645,7 +5646,7 @@ Following logs... (Press Ctrl+C to stop)`));
           return !previous || entry.dt > previous;
         });
         if (newEntries.length > 0) {
-          console.log(formatOutput(newEntries, outputFormat));
+          printResults(newEntries, outputFormat, runtime.jq);
         }
       }
       for (const [source, dt] of followLatest) {
@@ -5660,7 +5661,10 @@ Following logs... (Press Ctrl+C to stop)`));
   }, intervalMs);
   process.stdin.resume();
 }
-function resolveFormat(format) {
+function resolveFormat(format, jqFilter) {
+  if (jqFilter) {
+    return "json";
+  }
   if (format === "json" || format === "table" || format === "csv" || format === "pretty") {
     return format;
   }
@@ -5702,12 +5706,51 @@ async function searchLogs(pattern, options) {
     search: pattern
   });
 }
+function printResults(entries, format, jqFilter) {
+  const payload = formatOutput(entries, format);
+  if (!jqFilter) {
+    console.log(payload);
+    return;
+  }
+  try {
+    const result = spawnSync("jq", [jqFilter], {
+      input: payload,
+      encoding: "utf8"
+    });
+    if (result.error) {
+      console.error(source_default2.red(`jq execution failed: ${result.error.message}`));
+      console.log(payload);
+      return;
+    }
+    if (result.status !== 0) {
+      const stderr = result.stderr?.trim();
+      if (stderr) {
+        console.error(source_default2.red(`jq exited with status ${result.status}: ${stderr}`));
+      } else {
+        console.error(source_default2.red(`jq exited with status ${result.status}`));
+      }
+      console.log(payload);
+      return;
+    }
+    const output = result.stdout ?? "";
+    process.stdout.write(output);
+    if (!output.endsWith(`
+`)) {
+      process.stdout.write(`
+`);
+    }
+  } catch (error) {
+    console.error(source_default2.red(`jq integration error: ${error.message}`));
+    console.log(payload);
+  }
+}
 
 // src/commands/tail.ts
+import { spawnSync as spawnSync2 } from "node:child_process";
 async function tailLogs2(options) {
   const api = new QueryAPI;
   const config = loadConfig();
-  const { follow, interval, format, sources: multiSourceOption, ...queryOptions } = options;
+  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options;
   const limit = normalizeLimit2(queryOptions.limit);
   queryOptions.limit = limit;
   const resolvedSource = resolveSourceAlias(queryOptions.source);
@@ -5740,22 +5783,22 @@ async function tailLogs2(options) {
       if (queryOptions.source === undefined) {
         queryOptions.source = resolvedSource;
       }
-      await runSingleSource2(api, queryOptions, { follow, interval, format });
+      await runSingleSource2(api, queryOptions, { follow, interval, format, jq });
       return;
     }
     queryOptions.source = undefined;
-    await runMultiSource2(api, queryOptions, { follow, interval, format }, [...resolvedSources]);
+    await runMultiSource2(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources]);
   } catch (error) {
     console.error(source_default2.red(`Tail error: ${error.message}`));
     process.exit(1);
   }
 }
 async function runSingleSource2(api, options, runtime) {
-  const outputFormat = resolveFormat2(runtime.format);
+  const outputFormat = resolveFormat2(runtime.format, runtime.jq);
   let lastTimestamp = null;
   const results = await api.execute(options);
   if (results.length > 0) {
-    console.log(formatOutput(results, outputFormat));
+    printResults2(results, outputFormat, runtime.jq);
     lastTimestamp = results[0].dt;
   }
   if (!runtime.follow) {
@@ -5781,7 +5824,7 @@ Following logs... (Press Ctrl+C to stop)`));
       if (filtered.length === 0) {
         return;
       }
-      console.log(formatOutput(filtered, outputFormat));
+      printResults2(filtered, outputFormat, runtime.jq);
       lastTimestamp = filtered[0].dt;
     } catch (error) {
       console.error(source_default2.red(`Polling error: ${error.message}`));
@@ -5790,7 +5833,7 @@ Following logs... (Press Ctrl+C to stop)`));
   process.stdin.resume();
 }
 async function runMultiSource2(api, baseOptions, runtime, sources) {
-  const outputFormat = resolveFormat2(runtime.format);
+  const outputFormat = resolveFormat2(runtime.format, runtime.jq);
   const limit = baseOptions.limit ?? 100;
   const perSourceLatest = new Map;
   const collect = async (sinceMap, limitOverride, fallbackSince2) => {
@@ -5828,7 +5871,7 @@ async function runMultiSource2(api, baseOptions, runtime, sources) {
     perSourceLatest.set(source, dt);
   }
   if (initialCombined.length > 0) {
-    console.log(formatOutput(initialCombined, outputFormat));
+    printResults2(initialCombined, outputFormat, runtime.jq);
   }
   if (!runtime.follow) {
     return;
@@ -5847,7 +5890,7 @@ Following logs... (Press Ctrl+C to stop)`));
           return !previous || entry.dt > previous;
         });
         if (newEntries.length > 0) {
-          console.log(formatOutput(newEntries, outputFormat));
+          printResults2(newEntries, outputFormat, runtime.jq);
         }
       }
       for (const [source, dt] of followLatest) {
@@ -5862,7 +5905,10 @@ Following logs... (Press Ctrl+C to stop)`));
   }, intervalMs);
   process.stdin.resume();
 }
-function resolveFormat2(format) {
+function resolveFormat2(format, jqFilter) {
+  if (jqFilter) {
+    return "json";
+  }
   if (format === "json" || format === "table" || format === "csv" || format === "pretty") {
     return format;
   }
@@ -5885,6 +5931,44 @@ function normalizeLimit2(limit) {
     return Math.floor(limit);
   }
   return 100;
+}
+function printResults2(entries, format, jqFilter) {
+  const payload = formatOutput(entries, format);
+  if (!jqFilter) {
+    console.log(payload);
+    return;
+  }
+  try {
+    const result = spawnSync2("jq", [jqFilter], {
+      input: payload,
+      encoding: "utf8"
+    });
+    if (result.error) {
+      console.error(source_default2.red(`jq execution failed: ${result.error.message}`));
+      console.log(payload);
+      return;
+    }
+    if (result.status !== 0) {
+      const stderr = result.stderr?.trim();
+      if (stderr) {
+        console.error(source_default2.red(`jq exited with status ${result.status}: ${stderr}`));
+      } else {
+        console.error(source_default2.red(`jq exited with status ${result.status}`));
+      }
+      console.log(payload);
+      return;
+    }
+    const output = result.stdout ?? "";
+    process.stdout.write(output);
+    if (!output.endsWith(`
+`)) {
+      process.stdout.write(`
+`);
+    }
+  } catch (error) {
+    console.error(source_default2.red(`jq integration error: ${error.message}`));
+    console.log(payload);
+  }
 }
 
 // src/commands/trace.ts
@@ -5996,16 +6080,18 @@ function resolveRuntimeOptions(options) {
   const limit = parseLimitOption(options.limit);
   const sources = normalizeSourcesOption(options.sources);
   const where = parseWhereOption(options.where);
+  const jq = typeof options.jq === "string" && options.jq.trim().length > 0 ? options.jq.trim() : undefined;
   return {
     limit,
     sources,
-    where
+    where,
+    jq
   };
 }
 // package.json
 var package_default = {
   name: "@steipete/bslog",
-  version: "1.1.0",
+  version: "1.3.0",
   description: "Better Stack log query CLI with GraphQL-inspired syntax",
   author: "steipete",
   license: "MIT",
@@ -6095,77 +6181,82 @@ program2.name("bslog").description("Better Stack log query CLI with GraphQL-insp
 function collectFilters(value, previous = []) {
   return [...previous, value];
 }
-program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
+program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
   await runQuery(query, options);
 });
 program2.command("sql").argument("<sql>", "Raw ClickHouse SQL query").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "json").option("-v, --verbose", "Show SQL query and debug information").description("Execute raw ClickHouse SQL query").action(async (sql, options) => {
   await runSql(sql, options);
 });
-program2.command("tail [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--subsystem <name>", "Filter by subsystem").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("-f, --follow", "Follow log output").option("--interval <ms>", "Polling interval in milliseconds", "2000").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("-v, --verbose", "Show SQL query and debug information").description(`Tail logs (similar to tail -f)
+program2.command("tail [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--subsystem <name>", "Filter by subsystem").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Show logs until (e.g., 2024-01-01T12:00)").option("-f, --follow", "Follow log output").option("--interval <ms>", "Polling interval in milliseconds", "2000").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Tail logs (similar to tail -f)
 Examples:
   bslog tail                    # use default source
   bslog tail sweetistics-dev    # use specific source
   bslog tail prod -n 50         # tail production logs`).action(async (source, options) => {
-  const { limit, sources, where } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, ...rest } = options;
+  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
+  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
   await tailLogs({
     ...rest,
     source: source || options.source,
     sources,
     limit,
-    where
+    where,
+    jq
   });
 });
-program2.command("errors [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show errors since (e.g., 1h, 2d)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("-v, --verbose", "Show SQL query and debug information").description(`Show only error logs
+program2.command("errors [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show errors since (e.g., 1h, 2d)").option("--until <time>", "Show errors until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Show only error logs
 Examples:
   bslog errors                  # use default source
   bslog errors sweetistics-dev  # errors from dev
   bslog errors prod --since 1h  # recent prod errors`).action(async (source, options) => {
-  const { limit, sources, where } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, ...rest } = options;
+  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
+  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
   await showErrors({
     ...rest,
     source: source || options.source,
     sources,
     limit,
-    where
+    where,
+    jq
   });
 });
-program2.command("warnings [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show warnings since (e.g., 1h, 2d)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("-v, --verbose", "Show SQL query and debug information").description("Show only warning logs").action(async (source, options) => {
-  const { limit, sources, where } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, ...rest } = options;
+program2.command("warnings [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show warnings since (e.g., 1h, 2d)").option("--until <time>", "Show warnings until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Show only warning logs").action(async (source, options) => {
+  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
+  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
   await showWarnings({
     ...rest,
     source: source || options.source,
     sources,
     limit,
-    where
+    where,
+    jq
   });
 });
-program2.command("search <pattern> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--since <time>", "Search logs since (e.g., 1h, 2d)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("-v, --verbose", "Show SQL query and debug information").description(`Search logs for a pattern
+program2.command("search <pattern> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--since <time>", "Search logs since (e.g., 1h, 2d)").option("--until <time>", "Search logs until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Search logs for a pattern
 Examples:
   bslog search "error"                    # search in default source
   bslog search "error" sweetistics-dev    # search in dev
   bslog search "timeout" prod --since 1h  # search recent prod logs`).action(async (pattern, source, options) => {
-  const { limit, sources, where } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, ...rest } = options;
+  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
+  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
   await searchLogs(pattern, {
     ...rest,
     source: source || options.source,
     sources,
     limit,
-    where
+    where,
+    jq
   });
 });
-program2.command("trace <requestId> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Show logs until (e.g., 2024-01-01)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("-v, --verbose", "Show SQL query and debug information").description("Fetch all logs sharing a requestId across one or more sources").action(async (requestId, source, options) => {
-  const { limit, sources, where } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, ...rest } = options;
+program2.command("trace <requestId> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Show logs until (e.g., 2024-01-01)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Fetch all logs sharing a requestId across one or more sources").action(async (requestId, source, options) => {
+  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
+  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
   await traceRequest(requestId, {
     ...rest,
     source: source || options.source,
     sources,
     limit,
-    where
+    where,
+    jq
   });
 });
 var sources = program2.command("sources").description("Manage log sources");
@@ -6199,8 +6290,8 @@ program2.on("--help", () => {
   console.log("  $ bslog tail -f                       # Follow logs");
   console.log("  $ bslog errors --since 1h             # Errors from last hour");
   console.log('  $ bslog search "authentication failed"');
-  console.log('  $ bslog search "timeline" --where module=timeline --where env=production');
-  console.log(source_default.dim("    Tip: No --until flag yet; rerun with an adjusted --since for fixed windows."));
+  console.log('  $ bslog search "timeline" --where module=timeline --where env=production --until 2025-09-24T18:00');
+  console.log("  $ bslog tail --format json --jq '.[] | {dt, message}'");
   console.log("");
   console.log("  # Sources:");
   console.log("  $ bslog sources list                  # List all sources");

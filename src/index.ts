@@ -51,6 +51,7 @@ program
   .argument('<query>', 'GraphQL-like query string')
   .option('-s, --source <name>', 'Source name')
   .option('-f, --format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Query logs using GraphQL-like syntax')
   .action(async (query, options) => {
@@ -81,13 +82,14 @@ program
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('--sources <names>', 'Comma-separated list of sources to merge')
   .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Tail logs (similar to tail -f)\nExamples:\n  bslog tail                    # use default source\n  bslog tail sweetistics-dev    # use specific source\n  bslog tail prod -n 50         # tail production logs',
   )
   .action(async (source, options) => {
-    const { limit, sources, where } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
 
     await tailLogs({
       ...rest,
@@ -95,6 +97,7 @@ program
       sources,
       limit,
       where,
+      jq,
     })
   })
 
@@ -107,13 +110,14 @@ program
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('--sources <names>', 'Comma-separated list of sources to merge')
   .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Show only error logs\nExamples:\n  bslog errors                  # use default source\n  bslog errors sweetistics-dev  # errors from dev\n  bslog errors prod --since 1h  # recent prod errors',
   )
   .action(async (source, options) => {
-    const { limit, sources, where } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
 
     await showErrors({
       ...rest,
@@ -121,6 +125,7 @@ program
       sources,
       limit,
       where,
+      jq,
     })
   })
 
@@ -133,11 +138,12 @@ program
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('--sources <names>', 'Comma-separated list of sources to merge')
   .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Show only warning logs')
   .action(async (source, options) => {
-    const { limit, sources, where } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
 
     await showWarnings({
       ...rest,
@@ -145,6 +151,7 @@ program
       sources,
       limit,
       where,
+      jq,
     })
   })
 
@@ -158,13 +165,14 @@ program
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('--sources <names>', 'Comma-separated list of sources to merge')
   .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description(
     'Search logs for a pattern\nExamples:\n  bslog search "error"                    # search in default source\n  bslog search "error" sweetistics-dev    # search in dev\n  bslog search "timeout" prod --since 1h  # search recent prod logs',
   )
   .action(async (pattern, source, options) => {
-    const { limit, sources, where } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
 
     await searchLogs(pattern, {
       ...rest,
@@ -172,6 +180,7 @@ program
       sources,
       limit,
       where,
+      jq,
     })
   })
 
@@ -183,11 +192,12 @@ program
   .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
   .option('--sources <names>', 'Comma-separated list of sources to merge')
   .option('--where <filter...>', 'Filter JSON fields (field=value). Repeat to add multiple filters', collectFilters, [])
+  .option('--jq <filter>', 'Pipe JSON output through jq (requires jq in PATH)')
   .option('-v, --verbose', 'Show SQL query and debug information')
   .description('Fetch all logs sharing a requestId across one or more sources')
   .action(async (requestId, source, options) => {
-    const { limit, sources, where } = resolveRuntimeOptions(options)
-    const { where: _where, limit: _limit, sources: _sources, ...rest } = options
+    const { limit, sources, where, jq } = resolveRuntimeOptions(options)
+    const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options
 
     await traceRequest(requestId, {
       ...rest,
@@ -195,6 +205,7 @@ program
       sources,
       limit,
       where,
+      jq,
     })
   })
 
@@ -263,6 +274,7 @@ program.on('--help', () => {
   console.log('  $ bslog errors --since 1h             # Errors from last hour')
   console.log('  $ bslog search "authentication failed"')
   console.log('  $ bslog search "timeline" --where module=timeline --where env=production --until 2025-09-24T18:00')
+  console.log("  $ bslog tail --format json --jq '.[] | {dt, message}'")
   console.log('')
   console.log('  # Sources:')
   console.log('  $ bslog sources list                  # List all sources')

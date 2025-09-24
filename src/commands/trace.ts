@@ -4,6 +4,7 @@ import { tailLogs } from './tail'
 type TraceOptions = QueryOptions & {
   format?: string
   sources?: string[]
+  jq?: string
 }
 
 type TailExecutor = (options: TraceOptions) => Promise<void>

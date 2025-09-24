@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { spawnSync } from 'node:child_process'
 import { QueryAPI } from '../api/query'
 import type { LogEntry, QueryOptions } from '../types'
 import { loadConfig, resolveSourceAlias } from '../utils/config'
@@ -8,6 +9,7 @@ type TailRuntimeOptions = {
   follow?: boolean
   interval?: number
   format?: string
+  jq?: string
 }
 
 type TailOptions = QueryOptions & TailRuntimeOptions & {
@@ -20,7 +22,7 @@ export async function tailLogs(options: TailOptions): Promise<void> {
   const api = new QueryAPI()
   const config = loadConfig()
 
-  const { follow, interval, format, sources: multiSourceOption, ...queryOptions } = options
+  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options
 
   const limit = normalizeLimit(queryOptions.limit)
   queryOptions.limit = limit
@@ -61,12 +63,12 @@ export async function tailLogs(options: TailOptions): Promise<void> {
         queryOptions.source = resolvedSource
       }
 
-      await runSingleSource(api, queryOptions, { follow, interval, format })
+      await runSingleSource(api, queryOptions, { follow, interval, format, jq })
       return
     }
 
     queryOptions.source = undefined
-    await runMultiSource(api, queryOptions, { follow, interval, format }, [...resolvedSources])
+    await runMultiSource(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources])
   } catch (error: any) {
     console.error(chalk.red(`Tail error: ${error.message}`))
     process.exit(1)
@@ -78,13 +80,13 @@ async function runSingleSource(
   options: QueryOptions,
   runtime: TailRuntimeOptions,
 ): Promise<void> {
-  const outputFormat = resolveFormat(runtime.format)
+  const outputFormat = resolveFormat(runtime.format, runtime.jq)
   let lastTimestamp: string | null = null
 
   const results = await api.execute(options)
 
   if (results.length > 0) {
-    console.log(formatOutput(results, outputFormat))
+    printResults(results, outputFormat, runtime.jq)
     lastTimestamp = results[0].dt
   }
 
@@ -115,7 +117,7 @@ async function runSingleSource(
         return
       }
 
-      console.log(formatOutput(filtered, outputFormat))
+      printResults(filtered, outputFormat, runtime.jq)
       lastTimestamp = filtered[0].dt
     } catch (error: any) {
       console.error(chalk.red(`Polling error: ${error.message}`))
@@ -131,7 +133,7 @@ async function runMultiSource(
   runtime: TailRuntimeOptions,
   sources: string[],
 ): Promise<void> {
-  const outputFormat = resolveFormat(runtime.format)
+  const outputFormat = resolveFormat(runtime.format, runtime.jq)
   const limit = baseOptions.limit ?? 100
   const perSourceLatest = new Map<string, string>()
 
@@ -181,7 +183,7 @@ async function runMultiSource(
   }
 
   if (initialCombined.length > 0) {
-    console.log(formatOutput(initialCombined, outputFormat))
+    printResults(initialCombined, outputFormat, runtime.jq)
   }
 
   if (!runtime.follow) {
@@ -208,7 +210,7 @@ async function runMultiSource(
         })
 
         if (newEntries.length > 0) {
-          console.log(formatOutput(newEntries, outputFormat))
+          printResults(newEntries, outputFormat, runtime.jq)
         }
       }
 
@@ -226,7 +228,11 @@ async function runMultiSource(
   process.stdin.resume()
 }
 
-function resolveFormat(format?: string): OutputFormat {
+function resolveFormat(format: string | undefined, jqFilter?: string): OutputFormat {
+  if (jqFilter) {
+    return 'json'
+  }
+
   if (format === 'json' || format === 'table' || format === 'csv' || format === 'pretty') {
     return format
   }
@@ -277,4 +283,46 @@ export async function searchLogs(
     ...options,
     search: pattern,
   })
+}
+
+function printResults(entries: LogEntry[], format: OutputFormat, jqFilter?: string): void {
+  const payload = formatOutput(entries, format)
+
+  if (!jqFilter) {
+    console.log(payload)
+    return
+  }
+
+  try {
+    const result = spawnSync('jq', [jqFilter], {
+      input: payload,
+      encoding: 'utf8',
+    })
+
+    if (result.error) {
+      console.error(chalk.red(`jq execution failed: ${result.error.message}`))
+      console.log(payload)
+      return
+    }
+
+    if (result.status !== 0) {
+      const stderr = result.stderr?.trim()
+      if (stderr) {
+        console.error(chalk.red(`jq exited with status ${result.status}: ${stderr}`))
+      } else {
+        console.error(chalk.red(`jq exited with status ${result.status}`))
+      }
+      console.log(payload)
+      return
+    }
+
+    const output = result.stdout ?? ''
+    process.stdout.write(output)
+    if (!output.endsWith('\n')) {
+      process.stdout.write('\n')
+    }
+  } catch (error: any) {
+    console.error(chalk.red(`jq integration error: ${error.message}`))
+    console.log(payload)
+  }
 }

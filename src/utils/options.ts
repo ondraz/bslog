@@ -6,9 +6,12 @@ type RuntimeInput = {
   limit?: unknown
   sources?: string | string[]
   where?: string | string[]
+  jq?: unknown
 }
 
-export type RuntimeOptions = Pick<QueryOptions, 'limit' | 'sources' | 'where'>
+export type RuntimeOptions = Pick<QueryOptions, 'limit' | 'sources' | 'where'> & {
+  jq?: string
+}
 
 export function normalizeSourcesOption(input?: string | string[]): string[] | undefined {
   if (!input) {
@@ -142,10 +145,12 @@ export function resolveRuntimeOptions(options: RuntimeInput): RuntimeOptions {
   const limit = parseLimitOption(options.limit)
   const sources = normalizeSourcesOption(options.sources)
   const where = parseWhereOption(options.where)
+  const jq = typeof options.jq === 'string' && options.jq.trim().length > 0 ? options.jq.trim() : undefined
 
   return {
     limit,
     sources,
     where,
+    jq,
   }
 }

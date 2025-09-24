@@ -61,11 +61,13 @@ describe('CLI option helpers', () => {
         limit: '25',
         sources: 'prod,dev',
         where: ['module=timeline'],
+        jq: '.[]',
       })
 
       expect(result.limit).toBe(25)
       expect(result.sources).toEqual(['prod', 'dev'])
       expect(result.where).toEqual({ module: 'timeline' })
+      expect(result.jq).toBe('.[]')
     })
   })
 })
