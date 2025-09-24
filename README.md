@@ -174,6 +174,15 @@ bslog tail --since 1h
 bslog warnings --since 2d
 ```
 
+## Better Stack MCP vs bslog CLI
+
+Better Stack's MCP (Model Context Protocol) endpoints expose the same log storage that bslog queries, but they serve different workflows. Reference the [official MCP integration guide](https://betterstack.com/docs/getting-started/integrations/mcp/) for setup, and use the two side by side:
+
+- **Lean on MCP for quick context in chat-based tooling.** Assistants can run small ClickHouse snippets via MCP to summarize recent events without leaving the conversation.
+- **Reach for bslog when you need the full payload.** CLI commands stream nested JSON fields, respect your saved defaults, and integrate with pipes/`jq` for deeper debugging.
+- **Consider credential flow.** MCP sessions often require short-lived "Connect remotely" credentials, while bslog reads long-lived environment variables once per machine.
+- **Collaborate with both.** Share MCP snapshots with teammates for at-a-glance status, then dive into bslog to follow requests, inspect stack traces, or automate reporting.
+
 ## GraphQL-Inspired Query Syntax
 
 The killer feature of bslog is its intuitive query language that feels like GraphQL:
