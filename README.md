@@ -224,7 +224,7 @@ bslog query "{ logs(search: 'database connection') { dt, message } }"
 
 - Use `*` to get all fields
 - Specify individual fields: `dt, level, message, customField`
-- Access nested JSON fields directly
+- Access nested JSON fields directly (dot + bracket paths) e.g. `metadata.proxy[0].status`, `metadata["complex key"].value`
 
 ## Command Reference
 

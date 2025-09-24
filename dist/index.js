@@ -30,7 +30,7 @@ var __export = (target, all) => {
 var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
 var __require = /* @__PURE__ */ createRequire(import.meta.url);
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/error.js
+// node_modules/commander/lib/error.js
 var require_error = __commonJS((exports) => {
   class CommanderError extends Error {
     constructor(exitCode, code, message) {
@@ -54,7 +54,7 @@ var require_error = __commonJS((exports) => {
   exports.InvalidArgumentError = InvalidArgumentError;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/argument.js
+// node_modules/commander/lib/argument.js
 var require_argument = __commonJS((exports) => {
   var { InvalidArgumentError } = require_error();
 
@@ -80,7 +80,7 @@ var require_argument = __commonJS((exports) => {
           this._name = name;
           break;
       }
-      if (this._name.length > 3 && this._name.slice(-3) === "...") {
+      if (this._name.endsWith("...")) {
         this.variadic = true;
         this._name = this._name.slice(0, -3);
       }
@@ -88,11 +88,12 @@ var require_argument = __commonJS((exports) => {
     name() {
       return this._name;
     }
-    _concatValue(value, previous) {
+    _collectValue(value, previous) {
       if (previous === this.defaultValue || !Array.isArray(previous)) {
         return [value];
       }
-      return previous.concat(value);
+      previous.push(value);
+      return previous;
     }
     default(value, description) {
       this.defaultValue = value;
@@ -110,7 +111,7 @@ var require_argument = __commonJS((exports) => {
           throw new InvalidArgumentError(`Allowed choices are ${this.argChoices.join(", ")}.`);
         }
         if (this.variadic) {
-          return this._concatValue(arg, previous);
+          return this._collectValue(arg, previous);
         }
         return arg;
       };
@@ -133,7 +134,7 @@ var require_argument = __commonJS((exports) => {
   exports.humanReadableArgName = humanReadableArgName;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/help.js
+// node_modules/commander/lib/help.js
 var require_help = __commonJS((exports) => {
   var { humanReadableArgName } = require_argument();
 
@@ -490,7 +491,7 @@ ${itemIndentStr}`);
   exports.stripColor = stripColor;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/option.js
+// node_modules/commander/lib/option.js
 var require_option = __commonJS((exports) => {
   var { InvalidArgumentError } = require_error();
 
@@ -557,11 +558,12 @@ var require_option = __commonJS((exports) => {
       this.hidden = !!hide;
       return this;
     }
-    _concatValue(value, previous) {
+    _collectValue(value, previous) {
       if (previous === this.defaultValue || !Array.isArray(previous)) {
         return [value];
       }
-      return previous.concat(value);
+      previous.push(value);
+      return previous;
     }
     choices(values) {
       this.argChoices = values.slice();
@@ -570,7 +572,7 @@ var require_option = __commonJS((exports) => {
           throw new InvalidArgumentError(`Allowed choices are ${this.argChoices.join(", ")}.`);
         }
         if (this.variadic) {
-          return this._concatValue(arg, previous);
+          return this._collectValue(arg, previous);
         }
         return arg;
       };
@@ -673,7 +675,7 @@ var require_option = __commonJS((exports) => {
   exports.DualOptions = DualOptions;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/suggestSimilar.js
+// node_modules/commander/lib/suggestSimilar.js
 var require_suggestSimilar = __commonJS((exports) => {
   var maxDistance = 3;
   function editDistance(a, b) {
@@ -746,7 +748,7 @@ var require_suggestSimilar = __commonJS((exports) => {
   exports.suggestSimilar = suggestSimilar;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/lib/command.js
+// node_modules/commander/lib/command.js
 var require_command = __commonJS((exports) => {
   var EventEmitter = __require("node:events").EventEmitter;
   var childProcess = __require("node:child_process");
@@ -876,7 +878,10 @@ var require_command = __commonJS((exports) => {
     configureOutput(configuration) {
       if (configuration === undefined)
         return this._outputConfiguration;
-      this._outputConfiguration = Object.assign({}, this._outputConfiguration, configuration);
+      this._outputConfiguration = {
+        ...this._outputConfiguration,
+        ...configuration
+      };
       return this;
     }
     showHelpAfterError(displayHelp = true) {
@@ -925,7 +930,7 @@ var require_command = __commonJS((exports) => {
     }
     addArgument(argument) {
       const previousArgument = this.registeredArguments.slice(-1)[0];
-      if (previousArgument && previousArgument.variadic) {
+      if (previousArgument?.variadic) {
         throw new Error(`only the last argument can be variadic '${previousArgument.name()}'`);
       }
       if (argument.required && argument.defaultValue !== undefined && argument.parseArg === undefined) {
@@ -1080,7 +1085,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         if (val !== null && option.parseArg) {
           val = this._callParseArg(option, val, oldValue, invalidValueMessage);
         } else if (val !== null && option.variadic) {
-          val = option._concatValue(val, oldValue);
+          val = option._collectValue(val, oldValue);
         }
         if (val == null) {
           if (option.negate) {
@@ -1455,7 +1460,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
       this.processedArgs = processedArgs;
     }
     _chainOrCall(promise, fn) {
-      if (promise && promise.then && typeof promise.then === "function") {
+      if (promise?.then && typeof promise.then === "function") {
         return promise.then(() => fn());
       }
       return fn();
@@ -1532,7 +1537,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         promiseChain = this._chainOrCallHooks(promiseChain, "postAction");
         return promiseChain;
       }
-      if (this.parent && this.parent.listenerCount(commandEvent)) {
+      if (this.parent?.listenerCount(commandEvent)) {
         checkForUnknownOptions();
         this._processArguments();
         this.parent.emit(commandEvent, operands, unknown);
@@ -1594,11 +1599,10 @@ Expecting one of '${allowedValues.join("', '")}'`);
         cmd._checkForConflictingLocalOptions();
       });
     }
-    parseOptions(argv) {
+    parseOptions(args) {
       const operands = [];
       const unknown = [];
       let dest = operands;
-      const args = argv.slice();
       function maybeOption(arg) {
         return arg.length > 1 && arg[0] === "-";
       }
@@ -1608,12 +1612,15 @@ Expecting one of '${allowedValues.join("', '")}'`);
         return !this._getCommandAndAncestors().some((cmd) => cmd.options.map((opt) => opt.short).some((short) => /^-\d$/.test(short)));
       };
       let activeVariadicOption = null;
-      while (args.length) {
-        const arg = args.shift();
+      let activeGroup = null;
+      let i = 0;
+      while (i < args.length || activeGroup) {
+        const arg = activeGroup ?? args[i++];
+        activeGroup = null;
         if (arg === "--") {
           if (dest === unknown)
             dest.push(arg);
-          dest.push(...args);
+          dest.push(...args.slice(i));
           break;
         }
         if (activeVariadicOption && (!maybeOption(arg) || negativeNumberArg(arg))) {
@@ -1625,14 +1632,14 @@ Expecting one of '${allowedValues.join("', '")}'`);
           const option = this._findOption(arg);
           if (option) {
             if (option.required) {
-              const value = args.shift();
+              const value = args[i++];
               if (value === undefined)
                 this.optionMissingArgument(option);
               this.emit(`option:${option.name()}`, value);
             } else if (option.optional) {
               let value = null;
-              if (args.length > 0 && (!maybeOption(args[0]) || negativeNumberArg(args[0]))) {
-                value = args.shift();
+              if (i < args.length && (!maybeOption(args[i]) || negativeNumberArg(args[i]))) {
+                value = args[i++];
               }
               this.emit(`option:${option.name()}`, value);
             } else {
@@ -1649,7 +1656,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
               this.emit(`option:${option.name()}`, arg.slice(2));
             } else {
               this.emit(`option:${option.name()}`);
-              args.unshift(`-${arg.slice(2)}`);
+              activeGroup = `-${arg.slice(2)}`;
             }
             continue;
           }
@@ -1668,25 +1675,18 @@ Expecting one of '${allowedValues.join("', '")}'`);
         if ((this._enablePositionalOptions || this._passThroughOptions) && operands.length === 0 && unknown.length === 0) {
           if (this._findCommand(arg)) {
             operands.push(arg);
-            if (args.length > 0)
-              unknown.push(...args);
+            unknown.push(...args.slice(i));
             break;
           } else if (this._getHelpCommand() && arg === this._getHelpCommand().name()) {
-            operands.push(arg);
-            if (args.length > 0)
-              operands.push(...args);
+            operands.push(arg, ...args.slice(i));
             break;
           } else if (this._defaultCommandName) {
-            unknown.push(arg);
-            if (args.length > 0)
-              unknown.push(...args);
+            unknown.push(arg, ...args.slice(i));
             break;
           }
         }
         if (this._passThroughOptions) {
-          dest.push(arg);
-          if (args.length > 0)
-            dest.push(...args);
+          dest.push(arg, ...args.slice(i));
           break;
         }
         dest.push(arg);
@@ -2103,7 +2103,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
   exports.useColor = useColor;
 });
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/index.js
+// node_modules/commander/index.js
 var require_commander = __commonJS((exports) => {
   var { Argument } = require_argument();
   var { Command } = require_command();
@@ -9092,7 +9092,7 @@ var chalk = createChalk();
 var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
-// node_modules/.pnpm/commander@14.0.0/node_modules/commander/esm.mjs
+// node_modules/commander/esm.mjs
 var import__ = __toESM(require_commander(), 1);
 var {
   program,
@@ -10754,12 +10754,79 @@ class SourcesAPI {
 }
 
 // src/api/query.ts
+var VALID_IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
+function escapeSqlString(value) {
+  return value.replace(/'/g, "''");
+}
+
 class QueryAPI {
   client;
   sourcesAPI;
   constructor() {
     this.client = new BetterStackClient;
     this.sourcesAPI = new SourcesAPI;
+  }
+  buildJsonPath(field) {
+    const trimmed = field.trim();
+    if (trimmed.startsWith("$")) {
+      return trimmed;
+    }
+    const segments = [];
+    let buffer = "";
+    let inBracket = false;
+    for (const char of trimmed) {
+      if (char === "[") {
+        if (!inBracket && buffer) {
+          segments.push(buffer);
+          buffer = "";
+        }
+        inBracket = true;
+        buffer += char;
+      } else if (char === "]") {
+        buffer += char;
+        segments.push(buffer);
+        buffer = "";
+        inBracket = false;
+      } else if (char === "." && !inBracket) {
+        if (buffer) {
+          segments.push(buffer);
+          buffer = "";
+        }
+      } else {
+        buffer += char;
+      }
+    }
+    if (buffer) {
+      segments.push(buffer);
+    }
+    let path = "$";
+    for (const segment of segments) {
+      if (segment.startsWith("[")) {
+        const inner = segment.slice(1, -1);
+        if (inner.length === 0) {
+          path += segment;
+          continue;
+        }
+        const quoteChar = inner[0];
+        const isQuoted = quoteChar === '"' || quoteChar === "'";
+        if (isQuoted && inner[inner.length - 1] === quoteChar) {
+          const key = inner.slice(1, -1);
+          const normalized = key.replace(/"/g, "\\\"");
+          path += `["${normalized}"]`;
+        } else {
+          path += `[${inner}]`;
+        }
+      } else if (VALID_IDENTIFIER_REGEX.test(segment)) {
+        path += `.${segment}`;
+      } else {
+        path += `["${segment.replace(/"/g, "\\\"")}"]`;
+      }
+    }
+    return path;
+  }
+  buildJsonAccessor(field) {
+    const path = this.buildJsonPath(field);
+    return `JSON_VALUE(raw, '${path}')`;
   }
   async buildQuery(options) {
     const config = loadConfig();
@@ -10799,17 +10866,24 @@ class QueryAPI {
       }
     }
     if (options.subsystem) {
-      conditions.push(`getJSON(raw, 'subsystem') = '${options.subsystem}'`);
+      const subsystemAccessor = this.buildJsonAccessor("subsystem");
+      conditions.push(`${subsystemAccessor} = '${escapeSqlString(options.subsystem)}'`);
     }
     if (options.search) {
-      conditions.push(`raw LIKE '%${options.search.replace(/'/g, "''")}%'`);
+      conditions.push(`raw LIKE '%${escapeSqlString(options.search)}%'`);
     }
     if (options.where) {
       for (const [key, value] of Object.entries(options.where)) {
+        const accessor = this.buildJsonAccessor(key);
+        if (value === null) {
+          conditions.push(`${accessor} IS NULL`);
+          continue;
+        }
         if (typeof value === "string") {
-          conditions.push(`getJSON(raw, '${key}') = '${value}'`);
+          conditions.push(`${accessor} = '${escapeSqlString(value)}'`);
         } else {
-          conditions.push(`getJSON(raw, '${key}') = '${JSON.stringify(value)}'`);
+          const serialized = typeof value === "object" ? JSON.stringify(value) : String(value);
+          conditions.push(`${accessor} = '${escapeSqlString(serialized)}'`);
         }
       }
     }
@@ -10826,8 +10900,12 @@ class QueryAPI {
     for (const field of fields) {
       if (field === "*" || field === "raw") {
         selections.push("raw");
-      } else if (field === "dt") {} else {
-        selections.push(`getJSON(raw, '${field}') as ${field}`);
+      } else if (field === "dt") {
+        continue;
+      } else {
+        const accessor = this.buildJsonAccessor(field);
+        const escapedAlias = field.replace(/"/g, '""');
+        selections.push(`${accessor} AS "${escapedAlias}"`);
       }
     }
     return selections.join(", ");

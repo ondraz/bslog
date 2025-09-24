@@ -73,7 +73,43 @@ describe('Query Builder Integration', () => {
       })
 
       expect(sql).toContain(
-        "SELECT dt, getJSON(raw, 'level') as level, getJSON(raw, 'message') as message",
+        "SELECT dt, JSON_VALUE(raw, '$.level') AS \"level\", JSON_VALUE(raw, '$.message') AS \"message\"",
+      )
+    })
+
+    it('should build query with nested field selection', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        fields: ['vercel.proxy.status_code', "metadata['odd key']"],
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.vercel.proxy.status_code') AS "vercel.proxy.status_code"`,
+      )
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.metadata["odd key"]') AS "metadata['odd key']"`,
+      )
+    })
+
+    it('should build query with array index field selection', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        fields: ['metadata.proxy[0].status'],
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.metadata.proxy[0].status') AS "metadata.proxy[0].status"`,
+      )
+    })
+
+    it('should build query with root-level bracket selection', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        fields: ['["root key"].value'],
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$["root key"].value') AS "[""root key""].value"`,
       )
     })
 
@@ -106,7 +142,7 @@ describe('Query Builder Integration', () => {
         subsystem: 'api',
       })
 
-      expect(sql).toContain("WHERE getJSON(raw, 'subsystem') = 'api'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.subsystem') = 'api'")
     })
 
     it('should build query with search pattern', async () => {
@@ -147,8 +183,62 @@ describe('Query Builder Integration', () => {
         },
       })
 
-      expect(sql).toContain("getJSON(raw, 'userId') = '12345'")
-      expect(sql).toContain("getJSON(raw, 'status') = 'active'")
+      expect(sql).toContain(`JSON_VALUE(raw, '$.userId') = '12345'`)
+      expect(sql).toContain(`JSON_VALUE(raw, '$.status') = 'active'`)
+    })
+
+    it('should build query with nested where clause', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        where: {
+          'vercel.proxy.status_code': 200,
+          "metadata['odd key']": null,
+        },
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.vercel.proxy.status_code') = '200'`,
+      )
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.metadata["odd key"]') IS NULL`,
+      )
+    })
+
+    it('should build query with array index where clause', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        where: {
+          'metadata.proxy[0].status': 'ok',
+        },
+      })
+
+      expect(sql).toContain(`JSON_VALUE(raw, '$.metadata.proxy[0].status') = 'ok'`)
+    })
+
+    it('should build query with complex key characters', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        where: {
+          "metadata['key\"with\"quotes']": 'value',
+        },
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.metadata["key\\"with\\"quotes"]') = 'value'`,
+      )
+    })
+
+    it('should build query with object values in where clause', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        where: {
+          metadata: { feature: 'timeline', enabled: true },
+        },
+      })
+
+      expect(sql).toContain(
+        `JSON_VALUE(raw, '$.metadata') = '{"feature":"timeline","enabled":true}'`,
+      )
     })
 
     it('should handle where clause with non-string values', async () => {
@@ -160,8 +250,8 @@ describe('Query Builder Integration', () => {
         },
       })
 
-      expect(sql).toContain("getJSON(raw, 'count') = '42'")
-      expect(sql).toContain("getJSON(raw, 'active') = 'true'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.count') = '42'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.active') = 'true'")
     })
 
     it('should combine multiple filters with AND', async () => {
@@ -241,16 +331,16 @@ describe('Query Builder Integration', () => {
         limit: 500,
       })
 
-      expect(sql).toContain("SELECT dt, getJSON(raw, 'level') as level")
-      expect(sql).toContain("getJSON(raw, 'message') as message")
-      expect(sql).toContain("getJSON(raw, 'userId') as userId")
+      expect(sql).toContain("SELECT dt, JSON_VALUE(raw, '$.level') AS \"level\"")
+      expect(sql).toContain("JSON_VALUE(raw, '$.message') AS \"message\"")
+      expect(sql).toContain("JSON_VALUE(raw, '$.userId') AS \"userId\"")
       expect(sql).toContain("JSON_VALUE(raw, '$.vercel.level')")
-      expect(sql).toContain("getJSON(raw, 'subsystem') = 'payment'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.subsystem') = 'payment'")
       expect(sql).toContain('dt >= toDateTime64')
       expect(sql).toContain('dt <= toDateTime64')
       expect(sql).toContain("raw LIKE '%failed transaction%'")
-      expect(sql).toContain("getJSON(raw, 'environment') = 'production'")
-      expect(sql).toContain("getJSON(raw, 'region') = 'us-east-1'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.environment') = 'production'")
+      expect(sql).toContain("JSON_VALUE(raw, '$.region') = 'us-east-1'")
       expect(sql).toContain('LIMIT 500')
     })
   })

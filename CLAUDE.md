@@ -98,7 +98,7 @@ The separation allows for granular access control - some users might list source
 3. `QueryAPI.buildQuery()` constructs ClickHouse SQL:
    - Resolves source name to table (`t{team_id}_{table_name}_logs`)
    - Builds WHERE clauses for filters (level, subsystem, time range, search)
-   - Uses `getJSON()` function to extract fields from raw JSON logs
+   - Uses `JSON_VALUE()` to extract fields from raw JSON logs
 4. Query executed via HTTP to Better Stack's ClickHouse endpoint
 5. Results formatted based on output format (pretty, json, table, csv)
 

@@ -85,7 +85,7 @@ bslog config source sweetistics-dev
 For power users, allow raw ClickHouse SQL:
 
 ```bash
-bslog sql "SELECT dt, getJSON(raw, 'level') as level, raw 
+bslog sql "SELECT dt, JSON_VALUE(raw, '$.level') AS level, raw 
            FROM remote(t123456_logs) 
            WHERE raw LIKE '%error%' 
            ORDER BY dt DESC 

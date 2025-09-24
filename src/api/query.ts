@@ -4,6 +4,12 @@ import { parseTimeString, toClickHouseDateTime } from '../utils/time'
 import { BetterStackClient } from './client'
 import { SourcesAPI } from './sources'
 
+const VALID_IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/
+
+function escapeSqlString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "''")
+}
+
 export class QueryAPI {
   private client: BetterStackClient
   private sourcesAPI: SourcesAPI
@@ -11,6 +17,141 @@ export class QueryAPI {
   constructor() {
     this.client = new BetterStackClient()
     this.sourcesAPI = new SourcesAPI()
+  }
+
+  private buildJsonPath(field: string): string {
+    const trimmed = field.trim()
+    if (trimmed.startsWith('$')) {
+      return trimmed
+    }
+
+    const segments: string[] = []
+    let buffer = ''
+    let inBracket = false
+    let quoteChar: string | null = null
+
+    const flushPlain = () => {
+      const segment = buffer.trim()
+      if (segment) {
+        segments.push(segment)
+      }
+      buffer = ''
+    }
+
+    const flushBracket = () => {
+      if (buffer) {
+        segments.push(buffer)
+      }
+      buffer = ''
+    }
+
+    for (let index = 0; index < trimmed.length; index += 1) {
+      const char = trimmed[index]!
+
+      if (!inBracket) {
+        if (char === '.') {
+          flushPlain()
+          continue
+        }
+
+        if (char === '[') {
+          flushPlain()
+          inBracket = true
+          buffer = '['
+          quoteChar = null
+          continue
+        }
+
+        buffer += char
+        continue
+      }
+
+      buffer += char
+
+      if (char === '"' || char === "'") {
+        const previous = trimmed[index - 1]
+        if (quoteChar === char && previous !== '\\') {
+          quoteChar = null
+        } else if (!quoteChar) {
+          quoteChar = char
+        }
+      } else if (char === ']' && !quoteChar) {
+        flushBracket()
+        inBracket = false
+      }
+    }
+
+    if (buffer) {
+      if (inBracket) {
+        segments.push(buffer)
+      } else {
+        flushPlain()
+      }
+    }
+
+    let path = '$'
+    for (const segment of segments) {
+      if (!segment) {
+        continue
+      }
+
+      if (segment.startsWith('[')) {
+        path += this.normalizeBracketSegment(segment)
+      } else {
+        path += this.normalizePlainSegment(segment)
+      }
+    }
+
+    return path
+  }
+
+  private buildJsonAccessor(field: string): string {
+    const path = this.buildJsonPath(field)
+    return `JSON_VALUE(raw, '${path}')`
+  }
+
+  private normalizePlainSegment(segment: string): string {
+    const cleaned = segment.trim()
+    if (!cleaned) {
+      return ''
+    }
+
+    if (VALID_IDENTIFIER_REGEX.test(cleaned)) {
+      return `.${cleaned}`
+    }
+
+    const escaped = cleaned.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    return `["${escaped}"]`
+  }
+
+  private normalizeBracketSegment(segment: string): string {
+    if (!segment.startsWith('[') || !segment.endsWith(']')) {
+      return this.normalizePlainSegment(segment)
+    }
+
+    const inner = segment.slice(1, -1).trim()
+    if (!inner) {
+      return segment
+    }
+
+    if (inner === '*') {
+      return '[*]'
+    }
+
+    const quote = inner[0]
+    const isQuoted = quote === '"' || quote === "'"
+    if (isQuoted && inner[inner.length - 1] === quote) {
+      const key = inner.slice(1, -1).replace(/\\(['"])/g, '$1')
+      const escaped = key.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+      return `["${escaped}"]`
+    }
+
+    if (/^-?\d+$/.test(inner)) {
+      return `[${inner}]`
+    }
+
+    const escaped = inner.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    return `["${escaped}"]`
   }
 
   async buildQuery(options: QueryOptions): Promise<string> {
@@ -77,19 +218,28 @@ export class QueryAPI {
     }
 
     if (options.subsystem) {
-      conditions.push(`getJSON(raw, 'subsystem') = '${options.subsystem}'`)
+      const subsystemAccessor = this.buildJsonAccessor('subsystem')
+      conditions.push(`${subsystemAccessor} = '${escapeSqlString(options.subsystem)}'`)
     }
 
     if (options.search) {
-      conditions.push(`raw LIKE '%${options.search.replace(/'/g, "''")}%'`)
+      conditions.push(`raw LIKE '%${escapeSqlString(options.search)}%'`)
     }
 
     if (options.where) {
       for (const [key, value] of Object.entries(options.where)) {
+        const accessor = this.buildJsonAccessor(key)
+
+        if (value === null) {
+          conditions.push(`${accessor} IS NULL`)
+          continue
+        }
+
         if (typeof value === 'string') {
-          conditions.push(`getJSON(raw, '${key}') = '${value}'`)
+          conditions.push(`${accessor} = '${escapeSqlString(value)}'`)
         } else {
-          conditions.push(`getJSON(raw, '${key}') = '${JSON.stringify(value)}'`)
+          const serialized = typeof value === 'object' ? JSON.stringify(value) : String(value)
+          conditions.push(`${accessor} = '${escapeSqlString(serialized)}'`)
         }
       }
     }
@@ -113,9 +263,11 @@ export class QueryAPI {
       if (field === '*' || field === 'raw') {
         selections.push('raw')
       } else if (field === 'dt') {
-        // Already included
+        continue
       } else {
-        selections.push(`getJSON(raw, '${field}') as ${field}`)
+        const accessor = this.buildJsonAccessor(field)
+        const escapedAlias = field.replace(/"/g, '""')
+        selections.push(`${accessor} AS "${escapedAlias}"`)
       }
     }
 
