@@ -9,11 +9,17 @@ All notable changes to this project will be documented in this file.
 - Documented the JSON path syntax in the README and published the CLI update.
 
 ## [1.0.2] - 2025-09-22
-- No changelog entry was recorded at release time. See git history for details.
+- CLI now resolves its version straight from `package.json`, keeping `bslog --version` and help output in sync with published builds.
+- Touched up help text formatting after the version loader change.
 
 ## [1.0.1] - 2025-09-22
-- No changelog entry was recorded at release time. See git history for details.
+- Switched the project to Bun for both runtime and package management, updating documentation and tooling to match.
+- Reworked authentication: manual `.env` loading to avoid noisy dotenv output, clearer credential diagnostics, and richer error messages when Query API secrets are missing.
+- Added a `-v/--verbose` flag across commands so SQL is only echoed on demand while the formatter now dumps fully parsed JSON payloads.
+- Introduced source aliases and positional source overrides (`bslog tail dev`, `bslog search prod …`) to make hopping between environments trivial.
+- Refreshed docs (README, CLAUDE.md) and expanded the test suite around config handling.
 
 ## [1.0.0] - 2025-09-03
-- Initial public release of the `bslog` CLI.
+- First public release of the Better Stack log CLI with GraphQL-inspired queries, tail/errors/warnings/search helpers, source management, and pretty/JSON/CSV output formats.
+- Shipped initial formatter, time utilities, configuration management, and strict Biome linting setup.
 
