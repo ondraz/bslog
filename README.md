@@ -66,10 +66,6 @@ bslog search "timeout" --format json --jq '[.[] | {dt, message}]'
 
 The CLI automatically switches to JSON when `--jq` is provided; if `jq` is missing, the raw JSON payload is printed instead with an error message.
 
-### Still on the roadmap
-
-- Aggregations and histograms (like the bar chart in Telemetry Explore) aren’t built in yet—pipe `--format json` into your own tooling if you need counts per interval.
-
 ## Installation
 
 ### Global Installation (Recommended)
