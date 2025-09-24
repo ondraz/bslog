@@ -46,7 +46,7 @@ export class QueryAPI {
     }
 
     for (let index = 0; index < trimmed.length; index += 1) {
-      const char = trimmed[index]!
+      const char = trimmed.charAt(index)
 
       if (!inBracket) {
         if (char === '.') {
@@ -195,11 +195,12 @@ export class QueryAPI {
 
     if (options.level) {
       const escapedLevel = options.level.replace(/'/g, "''").toLowerCase()
-      const levelExpression = `lowerUTF8(COALESCE(`
-        + `JSONExtractString(raw, 'level'),`
-        + `JSON_VALUE(raw, '$.level'),`
-        + `JSON_VALUE(raw, '$.levelName'),`
-        + `JSON_VALUE(raw, '$.vercel.level')
+      const levelExpression =
+        `lowerUTF8(COALESCE(` +
+        `JSONExtractString(raw, 'level'),` +
+        `JSON_VALUE(raw, '$.level'),` +
+        `JSON_VALUE(raw, '$.levelName'),` +
+        `JSON_VALUE(raw, '$.vercel.level')
       ))`
       const messageExpression = `COALESCE(JSONExtractString(raw, 'message'), JSON_VALUE(raw, '$.message'))`
       const statusExpression = `toInt32OrZero(JSON_VALUE(raw, '$.vercel.proxy.status_code'))`
@@ -262,13 +263,16 @@ export class QueryAPI {
     for (const field of fields) {
       if (field === '*' || field === 'raw') {
         selections.push('raw')
-      } else if (field === 'dt') {
         continue
-      } else {
-        const accessor = this.buildJsonAccessor(field)
-        const escapedAlias = field.replace(/"/g, '""')
-        selections.push(`${accessor} AS "${escapedAlias}"`)
       }
+
+      if (field === 'dt') {
+        continue
+      }
+
+      const accessor = this.buildJsonAccessor(field)
+      const escapedAlias = field.replace(/"/g, '""')
+      selections.push(`${accessor} AS "${escapedAlias}"`)
     }
 
     return selections.join(', ')
@@ -283,16 +287,16 @@ export class QueryAPI {
     }
 
     const { username, password } = getQueryCredentials()
-    return this.client.query(sql, username, password)
+    return this.client.query<LogEntry>(sql, username, password)
   }
 
-  async executeSql(sql: string): Promise<any[]> {
-    // Ensure FORMAT is specified
-    if (!sql.toLowerCase().includes('format')) {
-      sql += ' FORMAT JSONEachRow'
+  executeSql(sql: string): Promise<Record<string, unknown>[]> {
+    let statement = sql
+    if (!statement.toLowerCase().includes('format')) {
+      statement = `${statement} FORMAT JSONEachRow`
     }
 
     const { username, password } = getQueryCredentials()
-    return this.client.query(sql, username, password)
+    return this.client.query<Record<string, unknown>>(statement, username, password)
   }
 }

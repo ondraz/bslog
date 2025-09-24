@@ -8,7 +8,7 @@ export class SourcesAPI {
     this.client = new BetterStackClient()
   }
 
-  async list(page: number = 1, perPage: number = 50): Promise<ApiResponse<Source[]>> {
+  list(page: number = 1, perPage: number = 50): Promise<ApiResponse<Source[]>> {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString(),

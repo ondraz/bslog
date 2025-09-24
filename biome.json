@@ -114,7 +114,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "**/*.json"],
+    "includes": [
+      "src/**/*.js",
+      "src/**/*.jsx",
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "docs/**/*.md",
+      "*.md",
+      "*.json"
+    ],
     "experimentalScannerIgnores": [
       "node_modules",
       "dist",

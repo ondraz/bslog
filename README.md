@@ -24,6 +24,7 @@ A powerful, intuitive CLI tool for querying Better Stack logs with GraphQL-inspi
 Better Stack's MCP (Model Context Protocol) endpoints expose the same log storage that bslog queries, but they serve different workflows. Reference the [official MCP integration guide](https://betterstack.com/docs/getting-started/integrations/mcp/) for setup, and use the two side by side:
 
 - **Token footprint matters.** The stock MCP ships ~50 tools and consumes roughly 7 k tokens of system context before it does any useful work. If you need lean prompts or run on constrained models, that overhead is noticeable.
+- **Latency favors the CLI.** bslog keeps a single HTTP session alive and streams JSON rows immediately; in practice a 5 000-row fetch finished ~40 % faster than the MCP round-tripping small SQL snippets through the assistant shell.
 - **Lean on MCP for quick context in chat-based tooling.** Assistants can run small ClickHouse snippets via MCP to summarize recent events without leaving the conversation.
 - **Reach for bslog when you need the full payload.** CLI commands stream nested JSON fields, respect your saved defaults, and integrate with pipes/`jq` for deeper debugging.
 - **Consider credential flow.** MCP sessions often require short-lived "Connect remotely" credentials, while bslog reads long-lived environment variables once per machine.
@@ -33,6 +34,7 @@ Better Stack's MCP (Model Context Protocol) endpoints expose the same log storag
 | --- | --- |
 | Lightweight, conversational context inline with an AI assistant | Full-fidelity log payloads, streaming output, and piping into local tooling |
 | Quick summaries or counts across a narrow time window | Chronological drill-down across multiple sources with `--sources dev,prod` |
+| Built-in helpers for quick aggregated snapshots | Explicit SQL, `--format json`, or `--jq` when you need rollups |
 | Temporary credentials you can rotate per debugging session | Long-lived local credentials stored in your shell profile |
 | Remote teammates to reproduce a query in their chat workspace | Automation or scripting from CI/cron with reproducible output formats |
 

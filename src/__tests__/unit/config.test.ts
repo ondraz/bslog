@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
-import { existsSync, mkdirSync, rmSync } from 'fs'
-import { homedir } from 'os'
-import { join } from 'path'
-import { addToHistory, loadConfig, saveConfig, updateConfig } from '../../utils/config'
+import { existsSync, rmSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 import { showConfig } from '../../commands/config'
+import { addToHistory, loadConfig, saveConfig, updateConfig } from '../../utils/config'
 
 describe('Config Utilities', () => {
   const CONFIG_DIR = join(homedir(), '.bslog')
@@ -13,14 +13,14 @@ describe('Config Utilities', () => {
   beforeEach(() => {
     // Backup existing config if it exists
     if (existsSync(CONFIG_FILE)) {
-      require('fs').copyFileSync(CONFIG_FILE, BACKUP_FILE)
+      require('node:fs').copyFileSync(CONFIG_FILE, BACKUP_FILE)
     }
   })
 
   afterEach(() => {
     // Restore backup if it exists
     if (existsSync(BACKUP_FILE)) {
-      require('fs').copyFileSync(BACKUP_FILE, CONFIG_FILE)
+      require('node:fs').copyFileSync(BACKUP_FILE, CONFIG_FILE)
       rmSync(BACKUP_FILE)
     } else if (existsSync(CONFIG_FILE)) {
       // Clean up test config if no backup
@@ -90,7 +90,7 @@ describe('Config Utilities', () => {
 
       saveConfig(config)
 
-      const content = require('fs').readFileSync(CONFIG_FILE, 'utf-8')
+      const content = require('node:fs').readFileSync(CONFIG_FILE, 'utf-8')
       const parsed = JSON.parse(content)
 
       expect(parsed.defaultSource).toBe('production')
@@ -224,8 +224,12 @@ describe('Config Utilities', () => {
       expect(creds.password).toBeUndefined()
 
       // Restore original values
-      if (originalUsername) process.env.BETTERSTACK_QUERY_USERNAME = originalUsername
-      if (originalPassword) process.env.BETTERSTACK_QUERY_PASSWORD = originalPassword
+      if (originalUsername) {
+        process.env.BETTERSTACK_QUERY_USERNAME = originalUsername
+      }
+      if (originalPassword) {
+        process.env.BETTERSTACK_QUERY_PASSWORD = originalPassword
+      }
     })
 
     it('should return credentials when environment variables are set', () => {
@@ -256,8 +260,12 @@ describe('Config Utilities', () => {
       expect(creds.password).toBeUndefined()
 
       // Restore original values
-      if (originalUsername) process.env.BETTERSTACK_QUERY_USERNAME = originalUsername
-      if (originalPassword) process.env.BETTERSTACK_QUERY_PASSWORD = originalPassword
+      if (originalUsername) {
+        process.env.BETTERSTACK_QUERY_USERNAME = originalUsername
+      }
+      if (originalPassword) {
+        process.env.BETTERSTACK_QUERY_PASSWORD = originalPassword
+      }
     })
   })
 
@@ -302,8 +310,8 @@ describe('Config Utilities', () => {
     let errorSpy: ReturnType<typeof mock>
 
     beforeEach(() => {
-      logSpy = mock(() => {})
-      errorSpy = mock(() => {})
+      logSpy = mock(() => undefined)
+      errorSpy = mock(() => undefined)
       console.log = logSpy as unknown as typeof console.log
       console.error = errorSpy as unknown as typeof console.error
     })

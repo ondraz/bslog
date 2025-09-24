@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - No unreleased changes.
 
+## [1.3.1] - 2025-09-24
+- Documented CLI vs MCP performance trade-offs and clarified quick-rollup workflows in the README comparison table.
+- Tightened formatter and API typing by eliminating `any`, introducing typed display rows, and making Better Stack queries stream structured payloads.
+- Slimmed Biome's scan surface to project sources and fixed rule violations so `bun run lint` stays clean.
+- Hardened parser/config helpers with explicit guards and block usage to satisfy the stricter lint profile.
+
 ## [1.3.0] - 2025-09-24
 - Added `--jq <filter>` to tail/errors/warnings/search/trace for inline JSON shaping via jq.
 - Results auto-switch to JSON when jq filters are present, with graceful fallbacks if jq is missing.

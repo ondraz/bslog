@@ -4300,6 +4300,73 @@ var {
   Option,
   Help
 } = import__.default;
+// package.json
+var package_default = {
+  name: "@steipete/bslog",
+  version: "1.3.1",
+  description: "Better Stack log query CLI with GraphQL-inspired syntax",
+  author: "steipete",
+  license: "MIT",
+  main: "dist/index.js",
+  type: "module",
+  scripts: {
+    dev: "bun run src/index.ts",
+    build: "bun build ./src/index.ts --compile --outfile dist/bslog",
+    "build:npm": "bun build ./src/index.ts --target node --outfile dist/index.js && chmod +x dist/index.js",
+    test: "bun test",
+    "test:unit": "bun test src/__tests__/unit",
+    "test:integration": "bun test src/__tests__/integration",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "type-check": "tsc --noEmit",
+    prepublishOnly: "bun run test && bun run build:npm",
+    lint: "biome check .",
+    "lint:fix": "biome check --write .",
+    format: "biome format --write ."
+  },
+  dependencies: {
+    chalk: "^5.6.2",
+    "cli-table3": "^0.6.5",
+    commander: "^14.0.1",
+    dotenv: "^17.2.2"
+  },
+  devDependencies: {
+    "@biomejs/biome": "^2.2.4",
+    "@types/bun": "^1.2.22",
+    "@types/node": "^24.5.2",
+    typescript: "^5.9.2"
+  },
+  bin: {
+    bslog: "dist/index.js"
+  },
+  files: [
+    "dist/",
+    "README.md"
+  ],
+  keywords: [
+    "betterstack",
+    "logs",
+    "cli",
+    "logging",
+    "graphql",
+    "query"
+  ],
+  repository: {
+    type: "git",
+    url: "git+https://github.com/steipete/bslog.git"
+  },
+  engines: {
+    bun: ">=1.0.0"
+  },
+  packageManager: "bun@1.2.22",
+  directories: {
+    doc: "docs"
+  },
+  bugs: {
+    url: "https://github.com/steipete/bslog/issues"
+  },
+  homepage: "https://github.com/steipete/bslog#readme"
+};
 
 // node_modules/chalk/source/index.js
 var { stdout: stdoutColor2, stderr: stderrColor2 } = supports_color_default;
@@ -4517,11 +4584,13 @@ var SOURCE_ALIASES = {
   test: "sweetistics-test"
 };
 function resolveSourceAlias(source) {
-  if (source === undefined || source === null)
+  if (source === undefined || source === null) {
     return;
+  }
   const aliased = SOURCE_ALIASES[source.toLowerCase()];
-  if (aliased)
+  if (aliased) {
     return aliased;
+  }
   return source;
 }
 
@@ -4550,7 +4619,8 @@ function setConfig(key, value) {
     }
     case "format": {
       const validFormats = ["json", "table", "csv", "pretty"];
-      if (!validFormats.includes(value)) {
+      const isOutputFormat = (candidate) => validFormats.includes(candidate);
+      if (!isOutputFormat(value)) {
         console.error(source_default2.red(`Invalid format: ${value}`));
         console.error(`Valid formats: ${validFormats.join(", ")}`);
         process.exit(1);
@@ -4658,7 +4728,7 @@ class BetterStackClient {
       dispose();
     }
   }
-  async telemetry(path, options = {}) {
+  telemetry(path, options = {}) {
     const url = `${TELEMETRY_BASE_URL}${path}`;
     return this.request(url, options);
   }
@@ -4737,25 +4807,37 @@ class BetterStackClient {
     const text = await response.text();
     const lines = text.trim().split(`
 `).filter((line) => line.length > 0);
-    return lines.map((line) => {
+    const rows = [];
+    for (const line of lines) {
       try {
-        return JSON.parse(line);
-      } catch (_e) {
+        const parsed = JSON.parse(line);
+        if (parsed && typeof parsed === "object") {
+          rows.push(parsed);
+        } else {
+          console.error("Unexpected row payload:", line);
+        }
+      } catch (_error) {
         console.error("Failed to parse line:", line);
-        return null;
       }
-    }).filter(Boolean);
+    }
+    return rows;
   }
 }
 function createRequestSignal(existing, timeoutMs) {
   if (existing) {
-    return { signal: existing, dispose: () => {} };
+    return {
+      signal: existing,
+      dispose: () => {}
+    };
   }
   const timeout = timeoutMs ?? DEFAULT_TIMEOUT_MS;
   if (typeof AbortSignal !== "undefined") {
     const abortSignalWithTimeout = AbortSignal.timeout;
     if (typeof abortSignalWithTimeout === "function") {
-      return { signal: abortSignalWithTimeout(timeout), dispose: () => {} };
+      return {
+        signal: abortSignalWithTimeout(timeout),
+        dispose: () => {}
+      };
     }
   }
   const controller = new AbortController;
@@ -4777,7 +4859,7 @@ class SourcesAPI {
   constructor() {
     this.client = new BetterStackClient;
   }
-  async list(page = 1, perPage = 50) {
+  list(page = 1, perPage = 50) {
     const params = new URLSearchParams({
       page: page.toString(),
       per_page: perPage.toString()
@@ -4847,7 +4929,7 @@ class QueryAPI {
       buffer = "";
     };
     for (let index = 0;index < trimmed.length; index += 1) {
-      const char = trimmed[index];
+      const char = trimmed.charAt(index);
       if (!inBracket) {
         if (char === ".") {
           flushPlain();
@@ -5007,13 +5089,14 @@ class QueryAPI {
     for (const field of fields) {
       if (field === "*" || field === "raw") {
         selections.push("raw");
-      } else if (field === "dt") {
         continue;
-      } else {
-        const accessor = this.buildJsonAccessor(field);
-        const escapedAlias = field.replace(/"/g, '""');
-        selections.push(`${accessor} AS "${escapedAlias}"`);
       }
+      if (field === "dt") {
+        continue;
+      }
+      const accessor = this.buildJsonAccessor(field);
+      const escapedAlias = field.replace(/"/g, '""');
+      selections.push(`${accessor} AS "${escapedAlias}"`);
     }
     return selections.join(", ");
   }
@@ -5025,22 +5108,23 @@ class QueryAPI {
     const { username, password } = getQueryCredentials();
     return this.client.query(sql, username, password);
   }
-  async executeSql(sql) {
-    if (!sql.toLowerCase().includes("format")) {
-      sql += " FORMAT JSONEachRow";
+  executeSql(sql) {
+    let statement = sql;
+    if (!statement.toLowerCase().includes("format")) {
+      statement = `${statement} FORMAT JSONEachRow`;
     }
     const { username, password } = getQueryCredentials();
-    return this.client.query(sql, username, password);
+    return this.client.query(statement, username, password);
   }
 }
 
 // src/parser/graphql.ts
 function parseGraphQLQuery(query) {
-  query = query.trim();
-  if (query.startsWith("{") && query.endsWith("}")) {
-    query = query.slice(1, -1).trim();
+  let normalizedQuery = query.trim();
+  if (normalizedQuery.startsWith("{") && normalizedQuery.endsWith("}")) {
+    normalizedQuery = normalizedQuery.slice(1, -1).trim();
   }
-  const logsMatch = query.match(/logs\s*\((.*?)\)\s*\{(.*?)\}/s);
+  const logsMatch = normalizedQuery.match(/logs\s*\((.*?)\)\s*\{(.*?)\}/s);
   if (!logsMatch) {
     throw new Error("Invalid query format. Expected: { logs(...) { ... } }");
   }
@@ -5186,8 +5270,9 @@ function formatOutput(data, format = "json") {
 function formatPretty(data) {
   const output = [];
   for (const entry of data) {
-    const timestamp = source_default2.gray(entry.dt || "No timestamp");
-    let level = entry.level || extractLevel(entry);
+    const timestampValue = typeof entry.dt === "string" ? entry.dt : "No timestamp";
+    const timestamp = source_default2.gray(timestampValue);
+    let level = typeof entry.level === "string" ? entry.level : extractLevel(entry);
     if (level) {
       switch (level.toLowerCase()) {
         case "error":
@@ -5211,7 +5296,7 @@ function formatPretty(data) {
       level = source_default2.gray("LOG");
     }
     const message = extractMessage(entry);
-    const subsystem = entry.subsystem || extractSubsystem(entry);
+    const subsystem = typeof entry.subsystem === "string" && entry.subsystem.length > 0 ? entry.subsystem : extractSubsystem(entry);
     let line = `[${timestamp}] ${level}`;
     if (subsystem) {
       line += ` ${source_default2.cyan(`[${subsystem}]`)}`;
@@ -5234,7 +5319,9 @@ function formatTable(data) {
   }
   const allKeys = new Set;
   for (const entry of data) {
-    Object.keys(entry).forEach((key) => allKeys.add(key));
+    for (const key of Object.keys(entry)) {
+      allKeys.add(key);
+    }
   }
   const headers = Array.from(allKeys);
   const table = new import_cli_table3.default({
@@ -5274,7 +5361,9 @@ function formatCSV(data) {
   }
   const allKeys = new Set;
   for (const entry of data) {
-    Object.keys(entry).forEach((key) => allKeys.add(key));
+    for (const key of Object.keys(entry)) {
+      allKeys.add(key);
+    }
   }
   const headers = Array.from(allKeys);
   const lines = [];
@@ -5303,89 +5392,115 @@ function escapeCSV(value) {
   return value;
 }
 function extractLevel(entry) {
-  if (entry.level) {
+  if (typeof entry.level === "string" && entry.level.length > 0) {
     return entry.level;
   }
-  if (entry.raw) {
-    try {
-      const parsed = typeof entry.raw === "string" ? JSON.parse(entry.raw) : entry.raw;
-      if (typeof parsed === "object" && parsed !== null) {
-        if (typeof parsed.level === "string" && parsed.level.length > 0) {
-          return parsed.level;
-        }
-        if (typeof parsed.severity === "string" && parsed.severity.length > 0) {
-          return parsed.severity;
-        }
-        if (parsed.vercel && typeof parsed.vercel === "object") {
-          const vercelLevel = parsed.vercel.level;
-          if (typeof vercelLevel === "string" && vercelLevel.length > 0) {
-            return vercelLevel;
-          }
-        }
-      }
-      return null;
-    } catch {
-      const match = entry.raw.match(/\b(ERROR|WARN|WARNING|INFO|DEBUG|FATAL)\b/i);
-      return match ? match[1] : null;
+  const parsed = parseRaw(entry.raw);
+  if (parsed) {
+    const level = parsed.level;
+    if (typeof level === "string" && level.length > 0) {
+      return level;
     }
+    const severity = parsed.severity;
+    if (typeof severity === "string" && severity.length > 0) {
+      return severity;
+    }
+    const vercel = parsed.vercel;
+    if (vercel && typeof vercel === "object") {
+      const vercelLevel = vercel.level;
+      if (typeof vercelLevel === "string" && vercelLevel.length > 0) {
+        return vercelLevel;
+      }
+    }
+    return null;
+  }
+  if (typeof entry.raw === "string") {
+    const match = entry.raw.match(/\b(ERROR|WARN|WARNING|INFO|DEBUG|FATAL)\b/i);
+    return match ? match[1] ?? null : null;
   }
   return null;
 }
 function extractMessage(entry) {
-  if (entry.message) {
+  if (typeof entry.message === "string" && entry.message.length > 0) {
     return entry.message;
   }
-  if (entry.raw) {
-    try {
-      const parsed = typeof entry.raw === "string" ? JSON.parse(entry.raw) : entry.raw;
-      return parsed.message || parsed.msg || JSON.stringify(parsed);
-    } catch {
-      return entry.raw;
+  const parsed = parseRaw(entry.raw);
+  if (parsed) {
+    const primary = parsed.message ?? parsed.msg;
+    if (typeof primary === "string" && primary.length > 0) {
+      return primary;
     }
+    return JSON.stringify(parsed);
+  }
+  if (typeof entry.raw === "string" && entry.raw.length > 0) {
+    return entry.raw;
   }
   return JSON.stringify(entry);
 }
 function extractSubsystem(entry) {
-  if (entry.subsystem) {
+  if (typeof entry.subsystem === "string" && entry.subsystem.length > 0) {
     return entry.subsystem;
   }
-  if (entry.raw) {
-    try {
-      const parsed = typeof entry.raw === "string" ? JSON.parse(entry.raw) : entry.raw;
-      return parsed.subsystem || parsed.service || parsed.component || null;
-    } catch {
-      return null;
+  const parsed = parseRaw(entry.raw);
+  if (parsed) {
+    const subsystem = parsed.subsystem ?? parsed.service ?? parsed.component;
+    if (typeof subsystem === "string" && subsystem.length > 0) {
+      return subsystem;
     }
   }
   return null;
 }
 function getExtraFields(entry) {
-  const exclude = ["dt", "raw", "level", "message", "subsystem", "time", "severity"];
+  const excludeKeys = new Set(["dt", "raw", "level", "message", "subsystem", "time", "severity"]);
   const extras = {};
-  if (entry.raw) {
-    try {
-      const parsed = typeof entry.raw === "string" ? JSON.parse(entry.raw) : entry.raw;
+  if (entry.raw !== undefined) {
+    const parsed = parseRaw(entry.raw);
+    if (parsed) {
       for (const [key, value] of Object.entries(parsed)) {
-        if (!exclude.includes(key)) {
+        if (!excludeKeys.has(key)) {
           extras[key] = value;
         }
       }
-    } catch {
+    } else {
       extras.raw = entry.raw;
     }
   }
   for (const [key, value] of Object.entries(entry)) {
-    if (!exclude.includes(key) && key !== "raw") {
+    if (!excludeKeys.has(key) && key !== "raw") {
       extras[key] = value;
     }
   }
   return extras;
 }
 function formatValue(value) {
+  if (value === null || value === undefined) {
+    return String(value);
+  }
   if (typeof value === "object") {
-    return JSON.stringify(value, null, 2);
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
   }
   return String(value);
+}
+function parseRaw(raw) {
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return parsed;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+  if (raw && typeof raw === "object") {
+    return raw;
+  }
+  return null;
 }
 
 // src/commands/query.ts
@@ -5409,7 +5524,8 @@ No results found`));
 ${results.length} results returned`));
     }
   } catch (error) {
-    console.error(source_default2.red(`Query error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`Query error: ${message}`));
     process.exit(1);
   }
 }
@@ -5428,7 +5544,8 @@ No results found`));
 ${results.length} results returned`));
     }
   } catch (error) {
-    console.error(source_default2.red(`SQL error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`SQL error: ${message}`));
     process.exit(1);
   }
 }
@@ -5457,7 +5574,8 @@ Available Sources:
       console.log(output);
     }
   } catch (error) {
-    console.error(source_default2.red(`Error listing sources: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`Error listing sources: ${message}`));
     process.exit(1);
   }
 }
@@ -5487,7 +5605,8 @@ Source: ${attributes.name}
       console.log(output);
     }
   } catch (error) {
-    console.error(source_default2.red(`Error getting source: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`Error getting source: ${message}`));
     process.exit(1);
   }
 }
@@ -5503,6 +5622,7 @@ function formatBytes(bytes) {
 
 // src/commands/tail.ts
 import { spawnSync } from "node:child_process";
+var jqRunner = spawnSync;
 async function tailLogs(options) {
   const api = new QueryAPI;
   const config = loadConfig();
@@ -5545,7 +5665,8 @@ async function tailLogs(options) {
     queryOptions.source = undefined;
     await runMultiSource(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources]);
   } catch (error) {
-    console.error(source_default2.red(`Tail error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`Tail error: ${message}`));
     process.exit(1);
   }
 }
@@ -5583,7 +5704,8 @@ Following logs... (Press Ctrl+C to stop)`));
       printResults(filtered, outputFormat, runtime.jq);
       lastTimestamp = filtered[0].dt;
     } catch (error) {
-      console.error(source_default2.red(`Polling error: ${error.message}`));
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(source_default2.red(`Polling error: ${message}`));
     }
   }, intervalMs);
   process.stdin.resume();
@@ -5602,7 +5724,7 @@ async function runMultiSource(api, baseOptions, runtime, sources) {
         source,
         limit: limitPerSource
       };
-      const sinceCandidate = (sinceMap && sinceMap.get(source)) ?? baseOptions.since ?? fallbackSince2;
+      const sinceCandidate = sinceMap?.get(source) ?? baseOptions.since ?? fallbackSince2;
       perSourceOptions.since = sinceCandidate || undefined;
       const result = await api.execute(perSourceOptions);
       if (result.length > 0) {
@@ -5613,8 +5735,9 @@ async function runMultiSource(api, baseOptions, runtime, sources) {
       }
     }
     combined.sort((a, b) => {
-      if (a.dt === b.dt)
+      if (a.dt === b.dt) {
         return 0;
+      }
       return a.dt < b.dt ? 1 : -1;
     });
     return {
@@ -5656,7 +5779,8 @@ Following logs... (Press Ctrl+C to stop)`));
         }
       }
     } catch (error) {
-      console.error(source_default2.red(`Polling error: ${error.message}`));
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(source_default2.red(`Polling error: ${message}`));
     }
   }, intervalMs);
   process.stdin.resume();
@@ -5688,19 +5812,19 @@ function normalizeLimit(limit) {
   }
   return 100;
 }
-async function showErrors(options) {
+function showErrors(options) {
   return tailLogs({
     ...options,
     level: "error"
   });
 }
-async function showWarnings(options) {
+function showWarnings(options) {
   return tailLogs({
     ...options,
     level: "warning"
   });
 }
-async function searchLogs(pattern, options) {
+function searchLogs(pattern, options) {
   return tailLogs({
     ...options,
     search: pattern
@@ -5713,7 +5837,7 @@ function printResults(entries, format, jqFilter) {
     return;
   }
   try {
-    const result = spawnSync("jq", [jqFilter], {
+    const result = jqRunner("jq", [jqFilter], {
       input: payload,
       encoding: "utf8"
     });
@@ -5740,13 +5864,15 @@ function printResults(entries, format, jqFilter) {
 `);
     }
   } catch (error) {
-    console.error(source_default2.red(`jq integration error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`jq integration error: ${message}`));
     console.log(payload);
   }
 }
 
 // src/commands/tail.ts
 import { spawnSync as spawnSync2 } from "node:child_process";
+var jqRunner2 = spawnSync2;
 async function tailLogs2(options) {
   const api = new QueryAPI;
   const config = loadConfig();
@@ -5789,7 +5915,8 @@ async function tailLogs2(options) {
     queryOptions.source = undefined;
     await runMultiSource2(api, queryOptions, { follow, interval, format, jq }, [...resolvedSources]);
   } catch (error) {
-    console.error(source_default2.red(`Tail error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`Tail error: ${message}`));
     process.exit(1);
   }
 }
@@ -5827,7 +5954,8 @@ Following logs... (Press Ctrl+C to stop)`));
       printResults2(filtered, outputFormat, runtime.jq);
       lastTimestamp = filtered[0].dt;
     } catch (error) {
-      console.error(source_default2.red(`Polling error: ${error.message}`));
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(source_default2.red(`Polling error: ${message}`));
     }
   }, intervalMs);
   process.stdin.resume();
@@ -5846,7 +5974,7 @@ async function runMultiSource2(api, baseOptions, runtime, sources) {
         source,
         limit: limitPerSource
       };
-      const sinceCandidate = (sinceMap && sinceMap.get(source)) ?? baseOptions.since ?? fallbackSince2;
+      const sinceCandidate = sinceMap?.get(source) ?? baseOptions.since ?? fallbackSince2;
       perSourceOptions.since = sinceCandidate || undefined;
       const result = await api.execute(perSourceOptions);
       if (result.length > 0) {
@@ -5857,8 +5985,9 @@ async function runMultiSource2(api, baseOptions, runtime, sources) {
       }
     }
     combined.sort((a, b) => {
-      if (a.dt === b.dt)
+      if (a.dt === b.dt) {
         return 0;
+      }
       return a.dt < b.dt ? 1 : -1;
     });
     return {
@@ -5900,7 +6029,8 @@ Following logs... (Press Ctrl+C to stop)`));
         }
       }
     } catch (error) {
-      console.error(source_default2.red(`Polling error: ${error.message}`));
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(source_default2.red(`Polling error: ${message}`));
     }
   }, intervalMs);
   process.stdin.resume();
@@ -5939,7 +6069,7 @@ function printResults2(entries, format, jqFilter) {
     return;
   }
   try {
-    const result = spawnSync2("jq", [jqFilter], {
+    const result = jqRunner2("jq", [jqFilter], {
       input: payload,
       encoding: "utf8"
     });
@@ -5966,7 +6096,8 @@ function printResults2(entries, format, jqFilter) {
 `);
     }
   } catch (error) {
-    console.error(source_default2.red(`jq integration error: ${error.message}`));
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(source_default2.red(`jq integration error: ${message}`));
     console.log(payload);
   }
 }
@@ -6088,73 +6219,62 @@ function resolveRuntimeOptions(options) {
     jq
   };
 }
-// package.json
-var package_default = {
-  name: "@steipete/bslog",
-  version: "1.3.0",
-  description: "Better Stack log query CLI with GraphQL-inspired syntax",
-  author: "steipete",
-  license: "MIT",
-  main: "dist/index.js",
-  type: "module",
-  scripts: {
-    dev: "bun run src/index.ts",
-    build: "bun build ./src/index.ts --compile --outfile dist/bslog",
-    "build:npm": "bun build ./src/index.ts --target node --outfile dist/index.js && chmod +x dist/index.js",
-    test: "bun test",
-    "test:unit": "bun test src/__tests__/unit",
-    "test:integration": "bun test src/__tests__/integration",
-    "test:watch": "bun test --watch",
-    "test:coverage": "bun test --coverage",
-    "type-check": "tsc --noEmit",
-    prepublishOnly: "bun run test && bun run build:npm",
-    lint: "biome check .",
-    "lint:fix": "biome check --write .",
-    format: "biome format --write ."
-  },
-  dependencies: {
-    chalk: "^5.6.2",
-    "cli-table3": "^0.6.5",
-    commander: "^14.0.1",
-    dotenv: "^17.2.2"
-  },
-  devDependencies: {
-    "@biomejs/biome": "^2.2.4",
-    "@types/bun": "^1.2.22",
-    "@types/node": "^24.5.2",
-    typescript: "^5.9.2"
-  },
-  bin: {
-    bslog: "dist/index.js"
-  },
-  files: [
-    "dist/",
-    "README.md"
-  ],
-  keywords: [
-    "betterstack",
-    "logs",
-    "cli",
-    "logging",
-    "graphql",
-    "query"
-  ],
-  repository: {
-    type: "git",
-    url: "git+https://github.com/steipete/bslog.git"
-  },
-  engines: {
-    bun: ">=1.0.0"
-  },
-  packageManager: "bun@1.2.22",
-  directories: {
-    doc: "docs"
-  },
-  bugs: {
-    url: "https://github.com/steipete/bslog/issues"
-  },
-  homepage: "https://github.com/steipete/bslog#readme"
-};
+
+// src/utils/command-factory.ts
+var collectWhereFilters = (value, previous = []) => [
+  ...previous,
+  value
+];
+function registerLogCommand(program2, config) {
+  const command = program2.command(config.name);
+  command.description(config.description);
+  if (config.arguments) {
+    for (const arg of config.arguments) {
+      command.argument(arg.declaration, arg.description);
+    }
+  }
+  applySharedLogOptions(command);
+  if (config.setup) {
+    config.setup(command);
+  }
+  command.action(async (...rawArgs) => {
+    const options = rawArgs.pop();
+    const runtime = resolveRuntimeOptions(options);
+    const filteredOptions = stripRuntimeOptionProps(options);
+    await config.handler({
+      args: rawArgs,
+      runtime,
+      options: filteredOptions
+    });
+  });
+  return command;
+}
+function mergeWithRuntime(options, runtime, extras = {}) {
+  const merged = {
+    ...options,
+    ...extras
+  };
+  if (runtime.limit !== undefined) {
+    merged.limit = runtime.limit;
+  }
+  if (runtime.sources && runtime.sources.length > 0) {
+    merged.sources = runtime.sources;
+  }
+  if (runtime.where && Object.keys(runtime.where).length > 0) {
+    merged.where = runtime.where;
+  }
+  if (runtime.jq) {
+    merged.jq = runtime.jq;
+  }
+  return merged;
+}
+function applySharedLogOptions(command) {
+  command.option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Time lower bound (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Time upper bound (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectWhereFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information");
+}
+function stripRuntimeOptionProps(options) {
+  const { limit: _limit, sources: _sources, where: _where, jq: _jq, ...rest } = options;
+  return rest;
+}
 
 // src/index.ts
 try {
@@ -6178,86 +6298,104 @@ try {
 var program2 = new Command;
 var cliVersion = typeof package_default.version === "string" ? package_default.version : "0.0.0";
 program2.name("bslog").description("Better Stack log query CLI with GraphQL-inspired syntax").version(cliVersion);
-function collectFilters(value, previous = []) {
-  return [...previous, value];
+function extractStringOption(options, key) {
+  const value = options[key];
+  return typeof value === "string" ? value : undefined;
 }
-program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
+program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
   await runQuery(query, options);
 });
 program2.command("sql").argument("<sql>", "Raw ClickHouse SQL query").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "json").option("-v, --verbose", "Show SQL query and debug information").description("Execute raw ClickHouse SQL query").action(async (sql, options) => {
   await runSql(sql, options);
 });
-program2.command("tail [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--subsystem <name>", "Filter by subsystem").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Show logs until (e.g., 2024-01-01T12:00)").option("-f, --follow", "Follow log output").option("--interval <ms>", "Polling interval in milliseconds", "2000").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Tail logs (similar to tail -f)
+registerLogCommand(program2, {
+  name: "tail",
+  description: `Tail logs (similar to tail -f)
 Examples:
   bslog tail                    # use default source
   bslog tail sweetistics-dev    # use specific source
-  bslog tail prod -n 50         # tail production logs`).action(async (source, options) => {
-  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
-  await tailLogs({
-    ...rest,
-    source: source || options.source,
-    sources,
-    limit,
-    where,
-    jq
-  });
+  bslog tail prod -n 50         # tail production logs`,
+  arguments: [{ declaration: "[source]", description: "Source name or alias" }],
+  setup: (cmd) => {
+    cmd.option("-l, --level <level>", "Filter by log level").option("--subsystem <name>", "Filter by subsystem").option("-f, --follow", "Follow log output").option("--interval <ms>", "Polling interval in milliseconds", "2000");
+  },
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args;
+    const sourceOption = extractStringOption(options, "source");
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption
+    });
+    await tailLogs(merged);
+  }
 });
-program2.command("errors [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show errors since (e.g., 1h, 2d)").option("--until <time>", "Show errors until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Show only error logs
+registerLogCommand(program2, {
+  name: "errors",
+  description: `Show only error logs
 Examples:
   bslog errors                  # use default source
   bslog errors sweetistics-dev  # errors from dev
-  bslog errors prod --since 1h  # recent prod errors`).action(async (source, options) => {
-  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
-  await showErrors({
-    ...rest,
-    source: source || options.source,
-    sources,
-    limit,
-    where,
-    jq
-  });
+  bslog errors prod --since 1h  # recent prod errors`,
+  arguments: [{ declaration: "[source]", description: "Source name or alias" }],
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args;
+    const sourceOption = extractStringOption(options, "source");
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption
+    });
+    await showErrors(merged);
+  }
 });
-program2.command("warnings [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show warnings since (e.g., 1h, 2d)").option("--until <time>", "Show warnings until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Show only warning logs").action(async (source, options) => {
-  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
-  await showWarnings({
-    ...rest,
-    source: source || options.source,
-    sources,
-    limit,
-    where,
-    jq
-  });
+registerLogCommand(program2, {
+  name: "warnings",
+  description: "Show only warning logs",
+  arguments: [{ declaration: "[source]", description: "Source name or alias" }],
+  handler: async ({ args, runtime, options }) => {
+    const [sourceArg] = args;
+    const sourceOption = extractStringOption(options, "source");
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption
+    });
+    await showWarnings(merged);
+  }
 });
-program2.command("search <pattern> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("-l, --level <level>", "Filter by log level").option("--since <time>", "Search logs since (e.g., 1h, 2d)").option("--until <time>", "Search logs until (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description(`Search logs for a pattern
+registerLogCommand(program2, {
+  name: "search",
+  description: `Search logs for a pattern
 Examples:
   bslog search "error"                    # search in default source
   bslog search "error" sweetistics-dev    # search in dev
-  bslog search "timeout" prod --since 1h  # search recent prod logs`).action(async (pattern, source, options) => {
-  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
-  await searchLogs(pattern, {
-    ...rest,
-    source: source || options.source,
-    sources,
-    limit,
-    where,
-    jq
-  });
+  bslog search "timeout" prod --since 1h  # search recent prod logs`,
+  arguments: [
+    { declaration: "<pattern>", description: "Substring or expression to search for" },
+    { declaration: "[source]", description: "Source name or alias" }
+  ],
+  setup: (cmd) => {
+    cmd.option("-l, --level <level>", "Filter by log level");
+  },
+  handler: async ({ args, runtime, options }) => {
+    const [pattern, sourceArg] = args;
+    const sourceOption = extractStringOption(options, "source");
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption
+    });
+    await searchLogs(pattern, merged);
+  }
 });
-program2.command("trace <requestId> [source]").option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Show logs since (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Show logs until (e.g., 2024-01-01)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information").description("Fetch all logs sharing a requestId across one or more sources").action(async (requestId, source, options) => {
-  const { limit, sources, where, jq } = resolveRuntimeOptions(options);
-  const { where: _where, limit: _limit, sources: _sources, jq: _jq, ...rest } = options;
-  await traceRequest(requestId, {
-    ...rest,
-    source: source || options.source,
-    sources,
-    limit,
-    where,
-    jq
-  });
+registerLogCommand(program2, {
+  name: "trace",
+  description: "Fetch all logs sharing a requestId across one or more sources",
+  arguments: [
+    { declaration: "<requestId>", description: "Request identifier to trace" },
+    { declaration: "[source]", description: "Source name or alias" }
+  ],
+  handler: async ({ args, runtime, options }) => {
+    const [requestId, sourceArg] = args;
+    const sourceOption = extractStringOption(options, "source");
+    const merged = mergeWithRuntime(options, runtime, {
+      source: sourceArg ?? sourceOption
+    });
+    await traceRequest(requestId, merged);
+  }
 });
 var sources = program2.command("sources").description("Manage log sources");
 sources.command("list").option("-f, --format <type>", "Output format (json|table|pretty)", "pretty").description("List all available sources").action(async (options) => {

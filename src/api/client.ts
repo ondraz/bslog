@@ -1,3 +1,4 @@
+import type { LogEntry } from '../types'
 import { getApiToken } from '../utils/config'
 
 const TELEMETRY_BASE_URL = 'https://telemetry.betterstack.com/api/v1'
@@ -48,12 +49,16 @@ export class BetterStackClient {
     }
   }
 
-  async telemetry<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  telemetry<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = `${TELEMETRY_BASE_URL}${path}`
     return this.request<T>(url, options)
   }
 
-  async query(sql: string, username?: string, password?: string): Promise<any[]> {
+  async query<T extends Record<string, unknown> = LogEntry>(
+    sql: string,
+    username?: string,
+    password?: string,
+  ): Promise<T[]> {
     // Query API can use either Bearer token or Basic auth
     const headers: Record<string, string> = {
       'Content-Type': 'text/plain',
@@ -143,33 +148,51 @@ export class BetterStackClient {
       .trim()
       .split('\n')
       .filter((line) => line.length > 0)
-    return lines
-      .map((line) => {
-        try {
-          return JSON.parse(line)
-        } catch (_e) {
-          console.error('Failed to parse line:', line)
-          return null
+    const rows: T[] = []
+
+    for (const line of lines) {
+      try {
+        const parsed = JSON.parse(line)
+        if (parsed && typeof parsed === 'object') {
+          rows.push(parsed as T)
+        } else {
+          console.error('Unexpected row payload:', line)
         }
-      })
-      .filter(Boolean)
+      } catch (_error) {
+        console.error('Failed to parse line:', line)
+      }
+    }
+
+    return rows
   }
 }
 
 function createRequestSignal(existing: AbortSignal | undefined, timeoutMs: number | undefined) {
   if (existing) {
-    return { signal: existing, dispose: () => {} }
+    return {
+      signal: existing,
+      dispose: () => {
+        /* no-op */
+      },
+    }
   }
 
   const timeout = timeoutMs ?? DEFAULT_TIMEOUT_MS
 
   if (typeof AbortSignal !== 'undefined') {
-    const abortSignalWithTimeout = (AbortSignal as typeof AbortSignal & {
-      timeout?: (ms: number) => AbortSignal
-    }).timeout
+    const abortSignalWithTimeout = (
+      AbortSignal as typeof AbortSignal & {
+        timeout?: (ms: number) => AbortSignal
+      }
+    ).timeout
 
     if (typeof abortSignalWithTimeout === 'function') {
-      return { signal: abortSignalWithTimeout(timeout), dispose: () => {} }
+      return {
+        signal: abortSignalWithTimeout(timeout),
+        dispose: () => {
+          /* no-op */
+        },
+      }
     }
   }
 

@@ -2,13 +2,13 @@ import type { QueryOptions } from '../types'
 
 export function parseGraphQLQuery(query: string): QueryOptions {
   // Remove outer braces and whitespace
-  query = query.trim()
-  if (query.startsWith('{') && query.endsWith('}')) {
-    query = query.slice(1, -1).trim()
+  let normalizedQuery = query.trim()
+  if (normalizedQuery.startsWith('{') && normalizedQuery.endsWith('}')) {
+    normalizedQuery = normalizedQuery.slice(1, -1).trim()
   }
 
   // Match the logs query pattern
-  const logsMatch = query.match(/logs\s*\((.*?)\)\s*\{(.*?)\}/s)
+  const logsMatch = normalizedQuery.match(/logs\s*\((.*?)\)\s*\{(.*?)\}/s)
   if (!logsMatch) {
     throw new Error('Invalid query format. Expected: { logs(...) { ... } }')
   }
@@ -74,8 +74,8 @@ export function parseGraphQLQuery(query: string): QueryOptions {
   return options
 }
 
-function parseArguments(argsStr: string): any {
-  const result: any = {}
+function parseArguments(argsStr: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
 
   // Simple regex-based parser for arguments
   // This handles: key: value, key: 'string', key: 123, key: { ... }, key: [ ... ]
@@ -126,7 +126,7 @@ function parseArguments(argsStr: string): any {
   return result
 }
 
-function parseValue(value: string): any {
+function parseValue(value: string): unknown {
   // Remove quotes from strings
   if (
     (value.startsWith("'") && value.endsWith("'")) ||
@@ -153,7 +153,7 @@ function parseValue(value: string): any {
     try {
       // Simple object parser
       const objStr = value.slice(1, -1)
-      const obj: any = {}
+      const obj: Record<string, unknown> = {}
       const pairs = objStr.split(',')
 
       for (const pair of pairs) {

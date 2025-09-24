@@ -36,8 +36,9 @@ export async function runQuery(
     } else {
       console.error(chalk.gray(`\n${results.length} results returned`))
     }
-  } catch (error: any) {
-    console.error(chalk.red(`Query error: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`Query error: ${message}`))
     process.exit(1)
   }
 }
@@ -61,8 +62,9 @@ export async function runSql(sql: string, options: { format?: OutputFormat }): P
     } else {
       console.error(chalk.gray(`\n${results.length} results returned`))
     }
-  } catch (error: any) {
-    console.error(chalk.red(`SQL error: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`SQL error: ${message}`))
     process.exit(1)
   }
 }

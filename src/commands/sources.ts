@@ -26,8 +26,9 @@ export async function listSources(options: { format?: OutputFormat }): Promise<v
       const output = formatOutput(sources, options.format || 'json')
       console.log(output)
     }
-  } catch (error: any) {
-    console.error(chalk.red(`Error listing sources: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`Error listing sources: ${message}`))
     process.exit(1)
   }
 }
@@ -67,8 +68,9 @@ export async function getSource(name: string, options: { format?: OutputFormat }
       const output = formatOutput([source], options.format || 'json')
       console.log(output)
     }
-  } catch (error: any) {
-    console.error(chalk.red(`Error getting source: ${error.message}`))
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(chalk.red(`Error getting source: ${message}`))
     process.exit(1)
   }
 }

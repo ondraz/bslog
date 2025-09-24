@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { loadConfig, updateConfig } from '../utils/config'
+import type { OutputFormat } from '../utils/formatter'
 
 type ShowConfigOptions = {
   format?: string
@@ -32,13 +33,16 @@ export function setConfig(key: string, value: string): void {
     }
 
     case 'format': {
-      const validFormats = ['json', 'table', 'csv', 'pretty']
-      if (!validFormats.includes(value)) {
+      const validFormats: readonly OutputFormat[] = ['json', 'table', 'csv', 'pretty']
+      const isOutputFormat = (candidate: string): candidate is OutputFormat =>
+        (validFormats as readonly string[]).includes(candidate)
+
+      if (!isOutputFormat(value)) {
         console.error(chalk.red(`Invalid format: ${value}`))
         console.error(`Valid formats: ${validFormats.join(', ')}`)
         process.exit(1)
       }
-      updateConfig({ outputFormat: value as any })
+      updateConfig({ outputFormat: value })
       console.log(chalk.green(`Default output format set to: ${value}`))
       break
     }

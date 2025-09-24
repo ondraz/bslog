@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { QueryAPI } from '../../api/query'
-import { SourcesAPI } from '../../api/sources'
 
 // Mock the sources API
 mock.module('../../api/sources', () => ({
   SourcesAPI: class {
-    async findByName(name: string) {
+    findByName(name: string) {
       if (name === 'test-source') {
         return {
           id: '123456',
@@ -31,17 +30,17 @@ mock.module('../../utils/config', () => ({
   }),
   getApiToken: () => 'test-token',
   getQueryCredentials: () => ({ username: 'test-user', password: 'test-pass' }),
-  saveConfig: () => {},
-  updateConfig: () => {},
-  addToHistory: () => {},
+  saveConfig: () => undefined,
+  updateConfig: () => undefined,
+  addToHistory: () => undefined,
   resolveSourceAlias: (source?: string) => source, // Pass through for tests
 }))
 
 // Mock the client
 mock.module('../../api/client', () => ({
   BetterStackClient: class {
-    async query(sql: string) {
-      return [{ dt: '2024-01-15', level: 'info', message: 'test' }]
+    query(_sql: string) {
+      return Promise.resolve([{ dt: '2024-01-15', level: 'info', message: 'test' }])
     }
   },
 }))
@@ -73,7 +72,7 @@ describe('Query Builder Integration', () => {
       })
 
       expect(sql).toContain(
-        "SELECT dt, JSON_VALUE(raw, '$.level') AS \"level\", JSON_VALUE(raw, '$.message') AS \"message\"",
+        'SELECT dt, JSON_VALUE(raw, \'$.level\') AS "level", JSON_VALUE(raw, \'$.message\') AS "message"',
       )
     })
 
@@ -86,9 +85,7 @@ describe('Query Builder Integration', () => {
       expect(sql).toContain(
         `JSON_VALUE(raw, '$.vercel.proxy.status_code') AS "vercel.proxy.status_code"`,
       )
-      expect(sql).toContain(
-        `JSON_VALUE(raw, '$.metadata["odd key"]') AS "metadata['odd key']"`,
-      )
+      expect(sql).toContain(`JSON_VALUE(raw, '$.metadata["odd key"]') AS "metadata['odd key']"`)
     })
 
     it('should build query with array index field selection', async () => {
@@ -108,9 +105,7 @@ describe('Query Builder Integration', () => {
         fields: ['["root key"].value'],
       })
 
-      expect(sql).toContain(
-        `JSON_VALUE(raw, '$["root key"].value') AS "[""root key""].value"`,
-      )
+      expect(sql).toContain(`JSON_VALUE(raw, '$["root key"].value') AS "[""root key""].value"`)
     })
 
     it('should handle asterisk field selection', async () => {
@@ -196,12 +191,8 @@ describe('Query Builder Integration', () => {
         },
       })
 
-      expect(sql).toContain(
-        `JSON_VALUE(raw, '$.vercel.proxy.status_code') = '200'`,
-      )
-      expect(sql).toContain(
-        `JSON_VALUE(raw, '$.metadata["odd key"]') IS NULL`,
-      )
+      expect(sql).toContain(`JSON_VALUE(raw, '$.vercel.proxy.status_code') = '200'`)
+      expect(sql).toContain(`JSON_VALUE(raw, '$.metadata["odd key"]') IS NULL`)
     })
 
     it('should build query with array index where clause', async () => {
@@ -219,13 +210,11 @@ describe('Query Builder Integration', () => {
       const sql = await queryAPI.buildQuery({
         source: 'test-source',
         where: {
-          "metadata['key\"with\"quotes']": 'value',
+          'metadata[\'key"with"quotes\']': 'value',
         },
       })
 
-      expect(sql).toContain(
-        `JSON_VALUE(raw, '$.metadata["key\\"with\\"quotes"]') = 'value'`,
-      )
+      expect(sql).toContain(`JSON_VALUE(raw, '$.metadata["key\\"with\\"quotes"]') = 'value'`)
     })
 
     it('should build query with object values in where clause', async () => {
@@ -331,9 +320,9 @@ describe('Query Builder Integration', () => {
         limit: 500,
       })
 
-      expect(sql).toContain("SELECT dt, JSON_VALUE(raw, '$.level') AS \"level\"")
-      expect(sql).toContain("JSON_VALUE(raw, '$.message') AS \"message\"")
-      expect(sql).toContain("JSON_VALUE(raw, '$.userId') AS \"userId\"")
+      expect(sql).toContain('SELECT dt, JSON_VALUE(raw, \'$.level\') AS "level"')
+      expect(sql).toContain('JSON_VALUE(raw, \'$.message\') AS "message"')
+      expect(sql).toContain('JSON_VALUE(raw, \'$.userId\') AS "userId"')
       expect(sql).toContain("JSON_VALUE(raw, '$.vercel.level')")
       expect(sql).toContain("JSON_VALUE(raw, '$.subsystem') = 'payment'")
       expect(sql).toContain('dt >= toDateTime64')
@@ -347,7 +336,7 @@ describe('Query Builder Integration', () => {
 
   describe('execute with verbose mode', () => {
     it('should log SQL query when verbose is true', async () => {
-      const consoleSpy = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = spyOn(console, 'error').mockImplementation(() => undefined)
 
       await queryAPI.execute({
         source: 'test-source',
@@ -365,7 +354,7 @@ describe('Query Builder Integration', () => {
     })
 
     it('should not log SQL query when verbose is false', async () => {
-      const consoleSpy = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = spyOn(console, 'error').mockImplementation(() => undefined)
 
       await queryAPI.execute({
         source: 'test-source',
@@ -379,7 +368,7 @@ describe('Query Builder Integration', () => {
     })
 
     it('should not log SQL query when verbose is undefined', async () => {
-      const consoleSpy = spyOn(console, 'error').mockImplementation(() => {})
+      const consoleSpy = spyOn(console, 'error').mockImplementation(() => undefined)
 
       await queryAPI.execute({
         source: 'test-source',
@@ -403,9 +392,9 @@ describe('Query Builder Integration', () => {
         }),
         getApiToken: () => 'test-token',
         getQueryCredentials: () => ({ username: 'test-user', password: 'test-pass' }),
-        saveConfig: () => {},
-        updateConfig: () => {},
-        addToHistory: () => {},
+        saveConfig: () => undefined,
+        updateConfig: () => undefined,
+        addToHistory: () => undefined,
         resolveSourceAlias: (source?: string) => {
           const aliases: Record<string, string> = {
             dev: 'test-source',

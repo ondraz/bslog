@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import { normalizeSourcesOption, parseLimitOption, parseWhereOption, resolveRuntimeOptions } from '../../utils/options'
+import {
+  normalizeSourcesOption,
+  parseLimitOption,
+  parseWhereOption,
+  resolveRuntimeOptions,
+} from '../../utils/options'
 
 describe('CLI option helpers', () => {
   describe('normalizeSourcesOption', () => {
@@ -33,7 +38,9 @@ describe('CLI option helpers', () => {
     })
 
     it('parses typed values', () => {
-      expect(parseWhereOption(['attempt=5', 'active=true', 'deleted=false', 'userId=null'])).toEqual({
+      expect(
+        parseWhereOption(['attempt=5', 'active=true', 'deleted=false', 'userId=null']),
+      ).toEqual({
         attempt: 5,
         active: true,
         deleted: false,
@@ -42,7 +49,9 @@ describe('CLI option helpers', () => {
     })
 
     it('parses quoted and JSON values', () => {
-      expect(parseWhereOption(["route='/api/timeline'", 'meta={"flag":true}', 'ids=[1,2]'])).toEqual({
+      expect(
+        parseWhereOption(["route='/api/timeline'", 'meta={"flag":true}', 'ids=[1,2]']),
+      ).toEqual({
         route: '/api/timeline',
         meta: { flag: true },
         ids: [1, 2],

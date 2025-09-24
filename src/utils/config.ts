@@ -85,11 +85,15 @@ const SOURCE_ALIASES: Record<string, string> = {
 }
 
 export function resolveSourceAlias(source: string | undefined): string | undefined {
-  if (source === undefined || source === null) return undefined
+  if (source === undefined || source === null) {
+    return undefined
+  }
 
   // Check if it's an alias
   const aliased = SOURCE_ALIASES[source.toLowerCase()]
-  if (aliased) return aliased
+  if (aliased) {
+    return aliased
+  }
 
   // Return as-is if not an alias
   return source

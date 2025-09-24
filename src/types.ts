@@ -18,7 +18,7 @@ export interface Source {
 export interface LogEntry {
   dt: string
   raw: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface QueryOptions {
@@ -28,7 +28,7 @@ export interface QueryOptions {
   since?: string
   until?: string
   search?: string
-  where?: Record<string, any>
+  where?: Record<string, unknown>
   fields?: string[]
   source?: string
   sources?: string[]

@@ -79,10 +79,7 @@ export function parseWhereOption(input?: string | string[]): Record<string, unkn
     if (valueString && valueString.length >= 2) {
       const firstChar = valueString[0]
       const lastChar = valueString[valueString.length - 1]
-      if (
-        (firstChar === '"' && lastChar === '"') ||
-        (firstChar === "'" && lastChar === "'")
-      ) {
+      if ((firstChar === '"' && lastChar === '"') || (firstChar === "'" && lastChar === "'")) {
         valueString = valueString.slice(1, -1)
       }
     }
@@ -130,7 +127,10 @@ function parseWhereValue(value: MaybeString): unknown {
     }
   }
 
-  if ((value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))) {
+  if (
+    (value.startsWith('{') && value.endsWith('}')) ||
+    (value.startsWith('[') && value.endsWith(']'))
+  ) {
     try {
       return JSON.parse(value)
     } catch {
@@ -145,7 +145,8 @@ export function resolveRuntimeOptions(options: RuntimeInput): RuntimeOptions {
   const limit = parseLimitOption(options.limit)
   const sources = normalizeSourcesOption(options.sources)
   const where = parseWhereOption(options.where)
-  const jq = typeof options.jq === 'string' && options.jq.trim().length > 0 ? options.jq.trim() : undefined
+  const jq =
+    typeof options.jq === 'string' && options.jq.trim().length > 0 ? options.jq.trim() : undefined
 
   return {
     limit,
