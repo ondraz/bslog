@@ -29,7 +29,7 @@ describe('Client Error Messages', () => {
       delete process.env.BETTERSTACK_QUERY_USERNAME
       delete process.env.BETTERSTACK_QUERY_PASSWORD
 
-      const expectedError = 
+      const expectedError =
         `Query API authentication failed: Malformed token\n\n` +
         `This usually means your Query API credentials are not set.\n\n` +
         `Current environment:\n` +

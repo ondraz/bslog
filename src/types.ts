@@ -31,6 +31,7 @@ export interface QueryOptions {
   where?: Record<string, any>
   fields?: string[]
   source?: string
+  sources?: string[]
   verbose?: boolean
 }
 

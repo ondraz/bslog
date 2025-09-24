@@ -51,7 +51,7 @@ Filters perform equality matches; values auto-detect booleans (`true`/`false`), 
 
 - Aggregations and histograms (like the bar chart in Telemetry Explore) aren’t built in yet—pipe `--format json` into your own tooling if you need counts per interval.
 - There is no `--until` flag for absolute end times; combine `--since` with a quick follow-up query if you need a fixed window.
-- The pretty printer shows entire JSON arrays; use `--format json` plus `jq` to collapse noisy sections until native collapsing lands.
+- For heavy payloads, switch to `--format json` and shape the output with `jq` (e.g., `jq '.[].message'`) to trim down large arrays or nested structures.
 
 ## Installation
 

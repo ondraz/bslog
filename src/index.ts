@@ -259,6 +259,7 @@ program.on('--help', () => {
   console.log('  $ bslog errors --since 1h             # Errors from last hour')
   console.log('  $ bslog search "authentication failed"')
   console.log('  $ bslog search "timeline" --where module=timeline --where env=production')
+  console.log(chalk.dim('    Tip: No --until flag yet; rerun with an adjusted --since for fixed windows.'))
   console.log('')
   console.log('  # Sources:')
   console.log('  $ bslog sources list                  # List all sources')
