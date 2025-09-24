@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - No unreleased changes.
 
+## [1.2.0] - 2025-09-24
+- Added `--until` flags to tail/errors/warnings/search so fixed windows can be queried without manual reruns.
+- Updated CLI help and docs with bounded-window examples.
+
 ## [1.1.0] - 2025-09-24
 - Added `--where field=value` filters across `tail`, `errors`, `warnings`, `search`, and `trace` so structured predicates no longer require raw SQL.
 - Documented the new filters in the README and CLI help, including guidance in the MCP comparison section.

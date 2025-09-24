@@ -42,15 +42,22 @@ Skip raw SQL when you need structured filters—every tail/search/errors/warning
 
 ```bash
 bslog search "timeline" --where module=timeline --where env=production --since 1h
-bslog tail prod --where userId='0199abc' --where attempt=3
+bslog tail prod --where userId='0199abc' --where attempt=3 --until 2025-09-24T18:00
 ```
 
 Filters perform equality matches; values auto-detect booleans (`true`/`false`), numbers, `null`, quoted strings, and JSON objects/arrays.
 
+### Bounded windows
+
+Combine `--since` and the new `--until` flag on any tail/errors/warnings/search/trace command to capture a fixed time window.
+
+```bash
+bslog tail prod --since 2025-09-24T13:00 --until 2025-09-24T14:00
+```
+
 ### Still on the roadmap
 
 - Aggregations and histograms (like the bar chart in Telemetry Explore) aren’t built in yet—pipe `--format json` into your own tooling if you need counts per interval.
-- There is no `--until` flag for absolute end times; combine `--since` with a quick follow-up query if you need a fixed window.
 - For heavy payloads, switch to `--format json` and shape the output with `jq` (e.g., `jq '.[].message'`) to trim down large arrays or nested structures.
 
 ## Installation
