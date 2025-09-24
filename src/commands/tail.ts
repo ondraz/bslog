@@ -5,6 +5,13 @@ import type { LogEntry, QueryOptions } from '../types'
 import { loadConfig, resolveSourceAlias } from '../utils/config'
 import { formatOutput, type OutputFormat } from '../utils/formatter'
 
+type JqRunner = typeof spawnSync
+let jqRunner: JqRunner = spawnSync
+
+export function __setJqRunnerForTests(runner?: JqRunner): void {
+  jqRunner = runner ?? spawnSync
+}
+
 type TailRuntimeOptions = {
   follow?: boolean
   interval?: number
@@ -294,7 +301,7 @@ function printResults(entries: LogEntry[], format: OutputFormat, jqFilter?: stri
   }
 
   try {
-    const result = spawnSync('jq', [jqFilter], {
+    const result = jqRunner('jq', [jqFilter], {
       input: payload,
       encoding: 'utf8',
     })
