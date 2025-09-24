@@ -8,5 +8,12 @@ All notable changes to this project will be documented in this file.
 - Expanded integration coverage for nested selections, array indexes, complex keys, and structured-object comparisons.
 - Documented the JSON path syntax in the README and published the CLI update.
 
-For changes prior to v1.0.3, see the git history.
+## [1.0.2] - 2025-09-22
+- No changelog entry was recorded at release time. See git history for details.
+
+## [1.0.1] - 2025-09-22
+- No changelog entry was recorded at release time. See git history for details.
+
+## [1.0.0] - 2025-09-03
+- Initial public release of the `bslog` CLI.
 
