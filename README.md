@@ -178,6 +178,8 @@ bslog warnings --since 2d
 
 Better Stack's MCP (Model Context Protocol) endpoints expose the same log storage that bslog queries, but they serve different workflows. Reference the [official MCP integration guide](https://betterstack.com/docs/getting-started/integrations/mcp/) for setup, and use the two side by side:
 
+- **Token footprint matters.** The stock MCP ships ~50 tools and consumes roughly 7 k tokens of system context before it does any useful work. If you need lean prompts or run on constrained models, that overhead is noticeable.
+
 - **Lean on MCP for quick context in chat-based tooling.** Assistants can run small ClickHouse snippets via MCP to summarize recent events without leaving the conversation.
 - **Reach for bslog when you need the full payload.** CLI commands stream nested JSON fields, respect your saved defaults, and integrate with pipes/`jq` for deeper debugging.
 - **Consider credential flow.** MCP sessions often require short-lived "Connect remotely" credentials, while bslog reads long-lived environment variables once per machine.
