@@ -39,6 +39,7 @@ export interface Config {
   defaultSource?: string
   defaultLimit?: number
   outputFormat?: 'json' | 'table' | 'csv' | 'pretty'
+  defaultLogLevel?: string
   queryHistory?: string[]
   savedQueries?: Record<string, string>
 }

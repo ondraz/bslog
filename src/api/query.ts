@@ -156,6 +156,12 @@ export class QueryAPI {
 
   async buildQuery(options: QueryOptions): Promise<string> {
     const config = loadConfig()
+    const configLevel =
+      config.defaultLogLevel && config.defaultLogLevel.toLowerCase() !== 'all'
+        ? config.defaultLogLevel
+        : undefined
+    const effectiveLevel = options.level ?? configLevel
+
     const rawSourceName = options.source || config.defaultSource
     const sourceName = resolveSourceAlias(rawSourceName)
 
@@ -193,8 +199,8 @@ export class QueryAPI {
       conditions.push(`dt <= toDateTime64('${toClickHouseDateTime(untilDate)}', 3)`)
     }
 
-    if (options.level) {
-      const escapedLevel = options.level.replace(/'/g, "''").toLowerCase()
+    if (effectiveLevel) {
+      const escapedLevel = effectiveLevel.replace(/'/g, "''").toLowerCase()
       const levelExpression =
         `lowerUTF8(COALESCE(` +
         `JSONExtractString(raw, 'level'),` +

@@ -30,6 +30,7 @@ export function loadConfig(): Config {
     return {
       defaultLimit: 100,
       outputFormat: 'json',
+      defaultLogLevel: 'all',
       queryHistory: [],
       savedQueries: {},
     }
@@ -37,12 +38,19 @@ export function loadConfig(): Config {
 
   try {
     const content = readFileSync(CONFIG_FILE, 'utf-8')
-    return JSON.parse(content)
+    const parsed = JSON.parse(content) as Config
+
+    if (!parsed.defaultLogLevel) {
+      parsed.defaultLogLevel = 'all'
+    }
+
+    return parsed
   } catch (_error) {
     console.warn('Failed to load config, using defaults')
     return {
       defaultLimit: 100,
       outputFormat: 'json',
+      defaultLogLevel: 'all',
     }
   }
 }

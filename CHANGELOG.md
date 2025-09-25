@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - No unreleased changes.
 
+## [1.3.2] - 2025-09-25
+- Added a configurable `defaultLogLevel` setting (defaults to `all`) so bslog surfaces every entry unless a command requests a narrower filter.
+- Updated the query builder to honor the config fallback while keeping per-command level overrides intact, and expanded integration/unit coverage for the new behavior.
+- Documented `bslog config set logLevel` in the README and refreshed tests for config persistence.
+
 ## [1.3.1] - 2025-09-24
 - Documented CLI vs MCP performance trade-offs and clarified quick-rollup workflows in the README comparison table.
 - Tightened formatter and API typing by eliminating `any`, introducing typed display rows, and making Better Stack queries stream structured payloads.

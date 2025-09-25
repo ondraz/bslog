@@ -198,6 +198,9 @@ bslog sources list
 # Set your default source
 bslog config source my-app-production
 
+# Optional: capture every log level by default or tighten filtering later
+bslog config set logLevel all
+
 # Check your configuration
 bslog config show
 ```

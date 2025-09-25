@@ -22,12 +22,15 @@ mock.module('../../api/sources', () => ({
 }))
 
 // Mock the config
+const mockConfig = {
+  defaultSource: 'test-source',
+  defaultLimit: 100,
+  outputFormat: 'json',
+  defaultLogLevel: 'all' as string,
+}
+
 mock.module('../../utils/config', () => ({
-  loadConfig: () => ({
-    defaultSource: 'test-source',
-    defaultLimit: 100,
-    outputFormat: 'json',
-  }),
+  loadConfig: () => mockConfig,
   getApiToken: () => 'test-token',
   getQueryCredentials: () => ({ username: 'test-user', password: 'test-pass' }),
   saveConfig: () => undefined,
@@ -50,6 +53,7 @@ describe('Query Builder Integration', () => {
 
   beforeEach(() => {
     queryAPI = new QueryAPI()
+    mockConfig.defaultLogLevel = 'all'
   })
 
   describe('buildQuery', () => {
@@ -129,6 +133,30 @@ describe('Query Builder Integration', () => {
       )
       expect(sql).toContain("JSONHas(raw, 'error')")
       expect(sql).toContain("toInt32OrZero(JSON_VALUE(raw, '$.vercel.proxy.status_code')) >= 500")
+      expect(sql).toContain("= 'error'")
+    })
+
+    it('should use config default log level when none is provided', async () => {
+      mockConfig.defaultLogLevel = 'debug'
+
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+      })
+
+      expect(sql).toContain("JSON_VALUE(raw, '$.vercel.level')")
+      expect(sql).toContain("= 'debug'")
+    })
+
+    it('should allow explicit level to override config default', async () => {
+      mockConfig.defaultLogLevel = 'debug'
+
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        level: 'info',
+      })
+
+      expect(sql).toContain("= 'info'")
+      expect(sql).not.toContain("= 'debug'")
     })
 
     it('should build query with subsystem filter', async () => {

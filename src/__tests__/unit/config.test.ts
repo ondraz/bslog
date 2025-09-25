@@ -39,6 +39,7 @@ describe('Config Utilities', () => {
 
       expect(config.defaultLimit).toBe(100)
       expect(config.outputFormat).toBe('json')
+      expect(config.defaultLogLevel).toBe('all')
       expect(config.queryHistory).toEqual([])
       expect(config.savedQueries).toEqual({})
     })
@@ -50,6 +51,7 @@ describe('Config Utilities', () => {
         outputFormat: 'pretty' as const,
         queryHistory: ['test query'],
         savedQueries: { test: 'query' },
+        defaultLogLevel: 'warning',
       }
 
       saveConfig(testConfig)
@@ -60,6 +62,7 @@ describe('Config Utilities', () => {
       expect(loaded.outputFormat).toBe('pretty')
       expect(loaded.queryHistory).toEqual(['test query'])
       expect(loaded.savedQueries).toEqual({ test: 'query' })
+      expect(loaded.defaultLogLevel).toBe('warning')
     })
   })
 

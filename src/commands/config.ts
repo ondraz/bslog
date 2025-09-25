@@ -7,7 +7,7 @@ type ShowConfigOptions = {
 }
 
 export function setConfig(key: string, value: string): void {
-  const validKeys = ['source', 'limit', 'format']
+  const validKeys = ['source', 'limit', 'format', 'logLevel']
 
   if (!validKeys.includes(key)) {
     console.error(chalk.red(`Invalid config key: ${key}`))
@@ -46,6 +46,26 @@ export function setConfig(key: string, value: string): void {
       console.log(chalk.green(`Default output format set to: ${value}`))
       break
     }
+
+    case 'logLevel': {
+      const normalized = value.trim().toLowerCase()
+      const aliases: Record<string, string> = {
+        warn: 'warning',
+      }
+
+      const resolved = aliases[normalized] ?? normalized
+      const validLevels = new Set(['all', 'debug', 'info', 'warning', 'error', 'fatal', 'trace'])
+
+      if (!validLevels.has(resolved)) {
+        console.error(chalk.red(`Invalid log level: ${value}`))
+        console.error(`Valid levels: ${Array.from(validLevels).join(', ')}`)
+        process.exit(1)
+      }
+
+      updateConfig({ defaultLogLevel: resolved })
+      console.log(chalk.green(`Default log level set to: ${resolved}`))
+      break
+    }
   }
 }
 
@@ -56,6 +76,7 @@ export function showConfig(options: ShowConfigOptions = {}): void {
     const normalized = {
       defaultSource: config.defaultSource ?? null,
       defaultLimit: config.defaultLimit ?? 100,
+      defaultLogLevel: config.defaultLogLevel ?? 'all',
       outputFormat: config.outputFormat ?? 'json',
       savedQueries: config.savedQueries ?? {},
       queryHistory: config.queryHistory ?? [],
@@ -68,6 +89,7 @@ export function showConfig(options: ShowConfigOptions = {}): void {
   console.log(chalk.bold('\nCurrent Configuration:\n'))
   console.log(`Default Source: ${config.defaultSource || chalk.gray('(not set)')}`)
   console.log(`Default Limit: ${config.defaultLimit || 100}`)
+  console.log(`Default Log Level: ${config.defaultLogLevel || 'all'}`)
   console.log(`Output Format: ${config.outputFormat || 'json'}`)
 
   if (config.savedQueries && Object.keys(config.savedQueries).length > 0) {
