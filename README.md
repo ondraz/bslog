@@ -447,11 +447,13 @@ Keys:
   source    Default source name
   limit     Default query limit
   format    Default output format (json|table|csv|pretty)
+  logLevel  Default log level fallback (all|debug|info|warning|error|fatal|trace)
 
 Examples:
   bslog config set source my-app-production
   bslog config set limit 200
   bslog config set format pretty
+  bslog config set logLevel warning
 ```
 
 #### `config show` - Show current configuration
