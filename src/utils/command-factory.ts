@@ -43,8 +43,12 @@ export function registerLogCommand(program: Command, config: LogCommandConfig): 
 
   command.action(async (...rawArgs: unknown[]) => {
     const options = rawArgs.pop() as Record<string, unknown>
-    const runtime = resolveRuntimeOptions(options)
-    const filteredOptions = stripRuntimeOptionProps(options)
+    const plainOptions =
+      typeof (options as Command).opts === 'function'
+        ? ((options as Command).opts() as Record<string, unknown>)
+        : options
+    const runtime = resolveRuntimeOptions(plainOptions)
+    const filteredOptions = stripRuntimeOptionProps(plainOptions)
 
     await config.handler({
       args: rawArgs as string[],
@@ -91,6 +95,7 @@ function applySharedLogOptions(command: Command): void {
     .option('--since <time>', 'Time lower bound (e.g., 1h, 2d, 2024-01-01)')
     .option('--until <time>', 'Time upper bound (e.g., 2024-01-01T12:00)')
     .option('--format <type>', 'Output format (json|table|csv|pretty)', 'pretty')
+    .option('--fields <names>', 'Comma-separated list of fields to select (e.g., dt,message,level)')
     .option('--sources <names>', 'Comma-separated list of sources to merge')
     .option(
       '--where <filter...>',

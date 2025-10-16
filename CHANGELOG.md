@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 - No unreleased changes.
 
+## [1.4.0] - 2025-10-16
+- Added a `--fields` option to tail/errors/warnings/search so you can trim responses to specific columns without dropping into SQL.
+- Normalized CLI option handling to ensure runtime parsing uses Commander’s resolved values (fixes missing flags when chaining helpers).
+- Documented the field-selection workflow in the README and refreshed the bundled artifacts for the new flag.
+
 ## [1.3.2] - 2025-09-25
 - Added a configurable `defaultLogLevel` setting (defaults to `all`) so bslog surfaces every entry unless a command requests a narrower filter.
 - Updated the query builder to honor the config fallback while keeping per-command level overrides intact, and expanded integration/unit coverage for the new behavior.

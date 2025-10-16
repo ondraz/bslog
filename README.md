@@ -277,6 +277,7 @@ bslog query "{ logs(search: 'database connection') { dt, message } }"
 - Use `*` to get all fields
 - Specify individual fields: `dt, level, message, customField`
 - Access nested JSON fields directly (dot + bracket paths) e.g. `metadata.proxy[0].status`, `metadata["complex key"].value`
+- CLI shortcut: combine `--fields` with compact formatters when you just want to confirm counts, e.g. `bslog errors -n 5 --fields dt,message`.
 
 ## Command Reference
 
@@ -292,6 +293,7 @@ Options:
   -l, --level <level>     Filter by log level
   --subsystem <name>      Filter by subsystem
   --since <time>          Show logs since (e.g., 1h, 2d, 2024-01-01)
+  --fields <names>        Comma-separated list of fields to select (e.g., dt,message,level)
   -f, --follow            Follow log output
   --interval <ms>         Polling interval in milliseconds (default: 2000)
   --format <type>         Output format (json|table|csv|pretty)
@@ -315,6 +317,7 @@ bslog errors [options]
 Options:
   -n, --limit <number>    Number of logs to fetch (default: 100)
   -s, --source <name>     Source name
+  --fields <names>        Comma-separated list of fields to select (e.g., dt,message,level)
   --since <time>          Show errors since
   --format <type>         Output format
   --sources <names>       Comma-separated list of sources to merge chronologically
@@ -340,6 +343,7 @@ Options:
   -s, --source <name>     Source name
   -l, --level <level>     Filter by log level
   --since <time>          Search logs since
+  --fields <names>        Comma-separated list of fields to select (e.g., dt,message,level)
   --format <type>         Output format
   --sources <names>       Comma-separated list of sources to merge chronologically
 

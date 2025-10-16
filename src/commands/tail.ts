@@ -19,9 +19,9 @@ type TailRuntimeOptions = {
   jq?: string
 }
 
-type TailOptions = QueryOptions &
+type TailOptions = Omit<QueryOptions, 'fields'> &
   TailRuntimeOptions & {
-    sources?: string[]
+    fields?: string | string[]
   }
 
 type LogEntryWithSource = LogEntry & { source: string }
@@ -30,7 +30,26 @@ export async function tailLogs(options: TailOptions): Promise<void> {
   const api = new QueryAPI()
   const config = loadConfig()
 
-  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options
+  const {
+    follow,
+    interval,
+    format,
+    jq,
+    sources: multiSourceOption,
+    fields: rawFields,
+    ...remainingOptions
+  } = options
+
+  const queryOptions: QueryOptions = {
+    ...(remainingOptions as QueryOptions),
+  }
+
+  const normalizedFields = normalizeFieldsOption(rawFields)
+  if (normalizedFields) {
+    queryOptions.fields = normalizedFields
+  } else {
+    delete queryOptions.fields
+  }
 
   const limit = normalizeLimit(queryOptions.limit)
   queryOptions.limit = limit
@@ -271,6 +290,24 @@ function normalizeLimit(limit?: number): number {
     return Math.floor(limit)
   }
   return 100
+}
+
+function normalizeFieldsOption(fields?: string | string[]): string[] | undefined {
+  if (!fields) {
+    return undefined
+  }
+
+  const rawValues = Array.isArray(fields) ? fields : [fields]
+  const names = rawValues
+    .flatMap((value) => value.split(','))
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0)
+
+  if (names.length === 0) {
+    return undefined
+  }
+
+  return Array.from(new Set(names))
 }
 
 export function showErrors(

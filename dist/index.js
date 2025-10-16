@@ -4303,7 +4303,7 @@ var {
 // package.json
 var package_default = {
   name: "@steipete/bslog",
-  version: "1.3.1",
+  version: "1.4.0",
   description: "Better Stack log query CLI with GraphQL-inspired syntax",
   author: "steipete",
   license: "MIT",
@@ -4540,18 +4540,24 @@ function loadConfig() {
     return {
       defaultLimit: 100,
       outputFormat: "json",
+      defaultLogLevel: "all",
       queryHistory: [],
       savedQueries: {}
     };
   }
   try {
     const content = readFileSync(CONFIG_FILE, "utf-8");
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (!parsed.defaultLogLevel) {
+      parsed.defaultLogLevel = "all";
+    }
+    return parsed;
   } catch (_error) {
     console.warn("Failed to load config, using defaults");
     return {
       defaultLimit: 100,
-      outputFormat: "json"
+      outputFormat: "json",
+      defaultLogLevel: "all"
     };
   }
 }
@@ -4596,7 +4602,7 @@ function resolveSourceAlias(source) {
 
 // src/commands/config.ts
 function setConfig(key, value) {
-  const validKeys = ["source", "limit", "format"];
+  const validKeys = ["source", "limit", "format", "logLevel"];
   if (!validKeys.includes(key)) {
     console.error(source_default2.red(`Invalid config key: ${key}`));
     console.error(`Valid keys: ${validKeys.join(", ")}`);
@@ -4629,6 +4635,22 @@ function setConfig(key, value) {
       console.log(source_default2.green(`Default output format set to: ${value}`));
       break;
     }
+    case "logLevel": {
+      const normalized = value.trim().toLowerCase();
+      const aliases = {
+        warn: "warning"
+      };
+      const resolved = aliases[normalized] ?? normalized;
+      const validLevels = new Set(["all", "debug", "info", "warning", "error", "fatal", "trace"]);
+      if (!validLevels.has(resolved)) {
+        console.error(source_default2.red(`Invalid log level: ${value}`));
+        console.error(`Valid levels: ${Array.from(validLevels).join(", ")}`);
+        process.exit(1);
+      }
+      updateConfig({ defaultLogLevel: resolved });
+      console.log(source_default2.green(`Default log level set to: ${resolved}`));
+      break;
+    }
   }
 }
 function showConfig(options = {}) {
@@ -4637,6 +4659,7 @@ function showConfig(options = {}) {
     const normalized = {
       defaultSource: config.defaultSource ?? null,
       defaultLimit: config.defaultLimit ?? 100,
+      defaultLogLevel: config.defaultLogLevel ?? "all",
       outputFormat: config.outputFormat ?? "json",
       savedQueries: config.savedQueries ?? {},
       queryHistory: config.queryHistory ?? []
@@ -4649,6 +4672,7 @@ Current Configuration:
 `));
   console.log(`Default Source: ${config.defaultSource || source_default2.gray("(not set)")}`);
   console.log(`Default Limit: ${config.defaultLimit || 100}`);
+  console.log(`Default Log Level: ${config.defaultLogLevel || "all"}`);
   console.log(`Output Format: ${config.outputFormat || "json"}`);
   if (config.savedQueries && Object.keys(config.savedQueries).length > 0) {
     console.log(source_default2.bold(`
@@ -5019,6 +5043,8 @@ class QueryAPI {
   }
   async buildQuery(options) {
     const config = loadConfig();
+    const configLevel = config.defaultLogLevel && config.defaultLogLevel.toLowerCase() !== "all" ? config.defaultLogLevel : undefined;
+    const effectiveLevel = options.level ?? configLevel;
     const rawSourceName = options.source || config.defaultSource;
     const sourceName = resolveSourceAlias(rawSourceName);
     if (!sourceName) {
@@ -5040,8 +5066,8 @@ class QueryAPI {
       const untilDate = parseTimeString(options.until);
       conditions.push(`dt <= toDateTime64('${toClickHouseDateTime(untilDate)}', 3)`);
     }
-    if (options.level) {
-      const escapedLevel = options.level.replace(/'/g, "''").toLowerCase();
+    if (effectiveLevel) {
+      const escapedLevel = effectiveLevel.replace(/'/g, "''").toLowerCase();
       const levelExpression = `lowerUTF8(COALESCE(` + `JSONExtractString(raw, 'level'),` + `JSON_VALUE(raw, '$.level'),` + `JSON_VALUE(raw, '$.levelName'),` + `JSON_VALUE(raw, '$.vercel.level')
       ))`;
       const messageExpression = `COALESCE(JSONExtractString(raw, 'message'), JSON_VALUE(raw, '$.message'))`;
@@ -5626,7 +5652,24 @@ var jqRunner = spawnSync;
 async function tailLogs(options) {
   const api = new QueryAPI;
   const config = loadConfig();
-  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options;
+  const {
+    follow,
+    interval,
+    format,
+    jq,
+    sources: multiSourceOption,
+    fields: rawFields,
+    ...remainingOptions
+  } = options;
+  const queryOptions = {
+    ...remainingOptions
+  };
+  const normalizedFields = normalizeFieldsOption(rawFields);
+  if (normalizedFields) {
+    queryOptions.fields = normalizedFields;
+  } else {
+    delete queryOptions.fields;
+  }
   const limit = normalizeLimit(queryOptions.limit);
   queryOptions.limit = limit;
   const resolvedSource = resolveSourceAlias(queryOptions.source);
@@ -5812,6 +5855,17 @@ function normalizeLimit(limit) {
   }
   return 100;
 }
+function normalizeFieldsOption(fields) {
+  if (!fields) {
+    return;
+  }
+  const rawValues = Array.isArray(fields) ? fields : [fields];
+  const names = rawValues.flatMap((value) => value.split(",")).map((name) => name.trim()).filter((name) => name.length > 0);
+  if (names.length === 0) {
+    return;
+  }
+  return Array.from(new Set(names));
+}
 function showErrors(options) {
   return tailLogs({
     ...options,
@@ -5876,7 +5930,24 @@ var jqRunner2 = spawnSync2;
 async function tailLogs2(options) {
   const api = new QueryAPI;
   const config = loadConfig();
-  const { follow, interval, format, jq, sources: multiSourceOption, ...queryOptions } = options;
+  const {
+    follow,
+    interval,
+    format,
+    jq,
+    sources: multiSourceOption,
+    fields: rawFields,
+    ...remainingOptions
+  } = options;
+  const queryOptions = {
+    ...remainingOptions
+  };
+  const normalizedFields = normalizeFieldsOption2(rawFields);
+  if (normalizedFields) {
+    queryOptions.fields = normalizedFields;
+  } else {
+    delete queryOptions.fields;
+  }
   const limit = normalizeLimit2(queryOptions.limit);
   queryOptions.limit = limit;
   const resolvedSource = resolveSourceAlias(queryOptions.source);
@@ -6062,6 +6133,17 @@ function normalizeLimit2(limit) {
   }
   return 100;
 }
+function normalizeFieldsOption2(fields) {
+  if (!fields) {
+    return;
+  }
+  const rawValues = Array.isArray(fields) ? fields : [fields];
+  const names = rawValues.flatMap((value) => value.split(",")).map((name) => name.trim()).filter((name) => name.length > 0);
+  if (names.length === 0) {
+    return;
+  }
+  return Array.from(new Set(names));
+}
 function printResults2(entries, format, jqFilter) {
   const payload = formatOutput(entries, format);
   if (!jqFilter) {
@@ -6239,8 +6321,9 @@ function registerLogCommand(program2, config) {
   }
   command.action(async (...rawArgs) => {
     const options = rawArgs.pop();
-    const runtime = resolveRuntimeOptions(options);
-    const filteredOptions = stripRuntimeOptionProps(options);
+    const plainOptions = typeof options.opts === "function" ? options.opts() : options;
+    const runtime = resolveRuntimeOptions(plainOptions);
+    const filteredOptions = stripRuntimeOptionProps(plainOptions);
     await config.handler({
       args: rawArgs,
       runtime,
@@ -6269,7 +6352,7 @@ function mergeWithRuntime(options, runtime, extras = {}) {
   return merged;
 }
 function applySharedLogOptions(command) {
-  command.option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Time lower bound (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Time upper bound (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectWhereFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information");
+  command.option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Time lower bound (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Time upper bound (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--fields <names>", "Comma-separated list of fields to select (e.g., dt,message,level)").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectWhereFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information");
 }
 function stripRuntimeOptionProps(options) {
   const { limit: _limit, sources: _sources, where: _where, jq: _jq, ...rest } = options;
