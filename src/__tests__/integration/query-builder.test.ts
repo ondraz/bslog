@@ -271,6 +271,46 @@ describe('Query Builder Integration', () => {
       expect(sql).toContain("JSON_VALUE(raw, '$.active') = 'true'")
     })
 
+    it('should append UNION ALL with s3 cluster when search is used', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        search: 'session-xyz',
+      })
+
+      expect(sql).toContain('UNION ALL')
+      expect(sql).toContain('s3Cluster(primary, t123456_test_source_s3)')
+      expect(sql).toContain('_row_type = 1')
+      expect(sql).toContain('dt > now() - INTERVAL 24 HOUR')
+      expect(sql).toContain(`raw LIKE '%session-xyz%'`)
+      // ORDER BY and LIMIT should come after the UNION ALL
+      const unionIdx = sql.indexOf('UNION ALL')
+      const orderIdx = sql.indexOf('ORDER BY')
+      expect(orderIdx).toBeGreaterThan(unionIdx)
+    })
+
+    it('should use since/until in s3Cluster query when provided', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        since: '2025-01-01',
+        search: 'test-val',
+      })
+
+      expect(sql).toContain('UNION ALL')
+      const s3Part = sql.split('UNION ALL')[1]
+      expect(s3Part).not.toContain('INTERVAL 24 HOUR')
+      expect(s3Part).toContain('dt >=')
+    })
+
+    it('should not append UNION ALL when search is not used', async () => {
+      const sql = await queryAPI.buildQuery({
+        source: 'test-source',
+        where: { module: 'auth' },
+      })
+
+      expect(sql).not.toContain('UNION ALL')
+      expect(sql).not.toContain('s3Cluster')
+    })
+
     it('should combine multiple filters with AND', async () => {
       const sql = await queryAPI.buildQuery({
         source: 'test-source',
@@ -281,7 +321,9 @@ describe('Query Builder Integration', () => {
 
       expect(sql).toContain('WHERE')
       expect(sql).toContain('AND')
-      expect(sql.match(/AND/g)?.length).toBe(2) // Two ANDs for three conditions
+      // Main query has 3 conditions joined by 2 ANDs; S3 UNION ALL adds more
+      const mainQuery = sql.split('UNION ALL')[0]
+      expect(mainQuery.match(/AND/g)?.length).toBe(2)
     })
 
     it('should use default source from config when not specified', async () => {

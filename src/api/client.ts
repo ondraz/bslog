@@ -1,8 +1,7 @@
 import type { LogEntry } from '../types'
-import { getApiToken } from '../utils/config'
+import { DEFAULT_QUERY_BASE_URL, getApiToken, loadConfig } from '../utils/config'
 
 const TELEMETRY_BASE_URL = 'https://telemetry.betterstack.com/api/v1'
-const QUERY_BASE_URL = 'https://eu-nbg-2-connect.betterstackdata.com'
 const DEFAULT_TIMEOUT_MS = 30_000
 
 interface RequestOptions {
@@ -73,11 +72,14 @@ export class BetterStackClient {
       headers.Authorization = `Bearer ${this.token}`
     }
 
+    const config = loadConfig()
+    const queryBaseUrl = config.queryBaseUrl || DEFAULT_QUERY_BASE_URL
+
     const { signal, dispose } = createRequestSignal(undefined, DEFAULT_TIMEOUT_MS)
 
     let response: Response
     try {
-      response = await fetch(QUERY_BASE_URL, {
+      response = await fetch(queryBaseUrl, {
         method: 'POST',
         headers,
         body: sql,

@@ -448,16 +448,18 @@ bslog query "{ logs(limit: 10) { * } }" --source staging
 bslog config set <key> <value>
 
 Keys:
-  source    Default source name
-  limit     Default query limit
-  format    Default output format (json|table|csv|pretty)
-  logLevel  Default log level fallback (all|debug|info|warning|error|fatal|trace)
+  source        Default source name
+  limit         Default query limit
+  format        Default output format (json|table|csv|pretty)
+  logLevel      Default log level fallback (all|debug|info|warning|error|fatal|trace)
+  queryBaseUrl  ClickHouse query endpoint URL (default: https://eu-nbg-2-connect.betterstackdata.com)
 
 Examples:
   bslog config set source my-app-production
   bslog config set limit 200
   bslog config set format pretty
   bslog config set logLevel warning
+  bslog config set queryBaseUrl https://us-east-1-connect.betterstackdata.com
 ```
 
 #### `config show` - Show current configuration
@@ -533,6 +535,7 @@ Configuration is stored in `~/.bslog/config.json`:
   "defaultSource": "my-app-production",
   "defaultLimit": 100,
   "outputFormat": "pretty",
+  "queryBaseUrl": "https://eu-nbg-2-connect.betterstackdata.com",
   "queryHistory": [
     "{ logs(level: 'error', limit: 50) { * } }",
     "{ logs(search: 'timeout') { dt, message } }"
