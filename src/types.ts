@@ -40,6 +40,7 @@ export interface Config {
   defaultLimit?: number
   outputFormat?: 'json' | 'table' | 'csv' | 'pretty'
   defaultLogLevel?: string
+  queryBaseUrl?: string
   queryHistory?: string[]
   savedQueries?: Record<string, string>
 }
@@ -47,8 +48,9 @@ export interface Config {
 export interface ApiResponse<T> {
   data: T
   pagination?: {
-    page: number
-    per_page: number
-    total: number
+    first: string | null
+    last: string | null
+    prev: string | null
+    next: string | null
   }
 }

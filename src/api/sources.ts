@@ -25,14 +25,8 @@ export class SourcesAPI {
     while (hasMore) {
       const response = await this.list(page, 50)
       sources.push(...response.data)
-
-      if (response.pagination) {
-        const { total, page: currentPage, per_page } = response.pagination
-        hasMore = currentPage * per_page < total
-        page++
-      } else {
-        hasMore = false
-      }
+      hasMore = response.pagination?.next !== null
+      page++
     }
 
     return sources
