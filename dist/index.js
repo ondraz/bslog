@@ -2113,7 +2113,7 @@ var require_commander = __commonJS((exports) => {
   exports.InvalidOptionArgumentError = InvalidArgumentError;
 });
 
-// node_modules/.pnpm/cli-table3@0.6.5/node_modules/cli-table3/src/debug.js
+// node_modules/cli-table3/src/debug.js
 var require_debug = __commonJS((exports, module) => {
   var messages = [];
   var level = 0;
@@ -2138,7 +2138,7 @@ var require_debug = __commonJS((exports, module) => {
   module.exports = debug;
 });
 
-// node_modules/.pnpm/ansi-regex@5.0.1/node_modules/ansi-regex/index.js
+// node_modules/ansi-regex/index.js
 var require_ansi_regex = __commonJS((exports, module) => {
   module.exports = ({ onlyFirst = false } = {}) => {
     const pattern = [
@@ -2149,13 +2149,13 @@ var require_ansi_regex = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/strip-ansi@6.0.1/node_modules/strip-ansi/index.js
+// node_modules/strip-ansi/index.js
 var require_strip_ansi = __commonJS((exports, module) => {
   var ansiRegex = require_ansi_regex();
   module.exports = (string) => typeof string === "string" ? string.replace(ansiRegex(), "") : string;
 });
 
-// node_modules/.pnpm/is-fullwidth-code-point@3.0.0/node_modules/is-fullwidth-code-point/index.js
+// node_modules/is-fullwidth-code-point/index.js
 var require_is_fullwidth_code_point = __commonJS((exports, module) => {
   var isFullwidthCodePoint = (codePoint) => {
     if (Number.isNaN(codePoint)) {
@@ -2170,14 +2170,14 @@ var require_is_fullwidth_code_point = __commonJS((exports, module) => {
   module.exports.default = isFullwidthCodePoint;
 });
 
-// node_modules/.pnpm/emoji-regex@8.0.0/node_modules/emoji-regex/index.js
+// node_modules/emoji-regex/index.js
 var require_emoji_regex = __commonJS((exports, module) => {
   module.exports = function() {
     return /\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62(?:\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74|\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F|\uD83D\uDC68(?:\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68\uD83C\uDFFB|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFE])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D)?\uD83D\uDC68|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D[\uDC66\uDC67])|[\u2695\u2696\u2708]\uFE0F|\uD83D[\uDC66\uDC67]|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|(?:\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708])\uFE0F|\uD83C\uDFFB\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C[\uDFFB-\uDFFF])|(?:\uD83E\uDDD1\uD83C\uDFFB\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)\uD83C\uDFFB|\uD83E\uDDD1(?:\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1)|(?:\uD83E\uDDD1\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D(?:\uD83D[\uDC68\uDC69]))(?:\uD83C[\uDFFB-\uDFFE])|(?:\uD83E\uDDD1\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB\uDFFC])|\uD83D\uDC69(?:\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFB\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFC-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D(?:\uD83D[\uDC68\uDC69])|\uD83D[\uDC68\uDC69])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD]))|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|(?:\uD83E\uDDD1\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB-\uDFFD])|\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D\uDC41\uFE0F\u200D\uD83D\uDDE8|\uD83D\uDC69(?:\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708]|\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\u200D[\u2695\u2696\u2708])|(?:(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)\uFE0F|\uD83D\uDC6F|\uD83E[\uDD3C\uDDDE\uDDDF])\u200D[\u2640\u2642]|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|\u200D[\u2640\u2642])|\uD83C\uDFF4\u200D\u2620)\uFE0F|\uD83D\uDC69\u200D\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08|\uD83D\uDC15\u200D\uD83E\uDDBA|\uD83D\uDC69\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC67|\uD83C\uDDFD\uD83C\uDDF0|\uD83C\uDDF4\uD83C\uDDF2|\uD83C\uDDF6\uD83C\uDDE6|[#\*0-9]\uFE0F\u20E3|\uD83C\uDDE7(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF])|\uD83C\uDDF9(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF])|\uD83C\uDDEA(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA])|\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF7(?:\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC])|\uD83D\uDC69(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF2(?:\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF])|\uD83C\uDDE6(?:\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF])|\uD83C\uDDF0(?:\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF])|\uD83C\uDDED(?:\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA])|\uD83C\uDDE9(?:\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF])|\uD83C\uDDFE(?:\uD83C[\uDDEA\uDDF9])|\uD83C\uDDEC(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE])|\uD83C\uDDF8(?:\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF])|\uD83C\uDDEB(?:\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7])|\uD83C\uDDF5(?:\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE])|\uD83C\uDDFB(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA])|\uD83C\uDDF3(?:\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF])|\uD83C\uDDE8(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF])|\uD83C\uDDF1(?:\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE])|\uD83C\uDDFF(?:\uD83C[\uDDE6\uDDF2\uDDFC])|\uD83C\uDDFC(?:\uD83C[\uDDEB\uDDF8])|\uD83C\uDDFA(?:\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF])|\uD83C\uDDEE(?:\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9])|\uD83C\uDDEF(?:\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5])|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:\uD83C[\uDFFB-\uDFFF])|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u261D\u270A-\u270D]|\uD83C[\uDF85\uDFC2\uDFC7]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC70\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDCAA\uDD74\uDD7A\uDD90\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1C\uDD1E\uDD1F\uDD30-\uDD36\uDDB5\uDDB6\uDDBB\uDDD2-\uDDD5])(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55]|\uD83C[\uDC04\uDCCF\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF93\uDFA0-\uDFCA\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF4\uDFF8-\uDFFF]|\uD83D[\uDC00-\uDC3E\uDC40\uDC42-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDD7A\uDD95\uDD96\uDDA4\uDDFB-\uDE4F\uDE80-\uDEC5\uDECC\uDED0-\uDED2\uDED5\uDEEB\uDEEC\uDEF4-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])|(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDED5\uDEE0-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])\uFE0F|(?:[\u261D\u26F9\u270A-\u270D]|\uD83C[\uDF85\uDFC2-\uDFC4\uDFC7\uDFCA-\uDFCC]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66-\uDC78\uDC7C\uDC81-\uDC83\uDC85-\uDC87\uDC8F\uDC91\uDCAA\uDD74\uDD75\uDD7A\uDD90\uDD95\uDD96\uDE45-\uDE47\uDE4B-\uDE4F\uDEA3\uDEB4-\uDEB6\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1F\uDD26\uDD30-\uDD39\uDD3C-\uDD3E\uDDB5\uDDB6\uDDB8\uDDB9\uDDBB\uDDCD-\uDDCF\uDDD1-\uDDDD])/g;
   };
 });
 
-// node_modules/.pnpm/string-width@4.2.3/node_modules/string-width/index.js
+// node_modules/string-width/index.js
 var require_string_width = __commonJS((exports, module) => {
   var stripAnsi = require_strip_ansi();
   var isFullwidthCodePoint = require_is_fullwidth_code_point();
@@ -2211,7 +2211,7 @@ var require_string_width = __commonJS((exports, module) => {
   module.exports.default = stringWidth;
 });
 
-// node_modules/.pnpm/cli-table3@0.6.5/node_modules/cli-table3/src/utils.js
+// node_modules/cli-table3/src/utils.js
 var require_utils = __commonJS((exports, module) => {
   var stringWidth = require_string_width();
   function codeRegex(capture) {
@@ -2515,7 +2515,7 @@ var require_utils = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/styles.js
+// node_modules/@colors/colors/lib/styles.js
 var require_styles = __commonJS((exports, module) => {
   var styles4 = {};
   module["exports"] = styles4;
@@ -2579,7 +2579,7 @@ var require_styles = __commonJS((exports, module) => {
   });
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/system/has-flag.js
+// node_modules/@colors/colors/lib/system/has-flag.js
 var require_has_flag = __commonJS((exports, module) => {
   module.exports = function(flag, argv) {
     argv = argv || process.argv;
@@ -2590,7 +2590,7 @@ var require_has_flag = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/system/supports-colors.js
+// node_modules/@colors/colors/lib/system/supports-colors.js
 var require_supports_colors = __commonJS((exports, module) => {
   var os2 = __require("os");
   var hasFlag2 = require_has_flag();
@@ -2683,7 +2683,7 @@ var require_supports_colors = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/custom/trap.js
+// node_modules/@colors/colors/lib/custom/trap.js
 var require_trap = __commonJS((exports, module) => {
   module["exports"] = function runTheTrap(text, options) {
     var result = "";
@@ -2750,7 +2750,7 @@ var require_trap = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/custom/zalgo.js
+// node_modules/@colors/colors/lib/custom/zalgo.js
 var require_zalgo = __commonJS((exports, module) => {
   module["exports"] = function zalgo(text, options) {
     text = text || "   he is here   ";
@@ -2935,7 +2935,7 @@ var require_zalgo = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/maps/america.js
+// node_modules/@colors/colors/lib/maps/america.js
 var require_america = __commonJS((exports, module) => {
   module["exports"] = function(colors) {
     return function(letter, i, exploded) {
@@ -2953,7 +2953,7 @@ var require_america = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/maps/zebra.js
+// node_modules/@colors/colors/lib/maps/zebra.js
 var require_zebra = __commonJS((exports, module) => {
   module["exports"] = function(colors) {
     return function(letter, i, exploded) {
@@ -2962,7 +2962,7 @@ var require_zebra = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/maps/rainbow.js
+// node_modules/@colors/colors/lib/maps/rainbow.js
 var require_rainbow = __commonJS((exports, module) => {
   module["exports"] = function(colors) {
     var rainbowColors = ["red", "yellow", "green", "blue", "magenta"];
@@ -2976,7 +2976,7 @@ var require_rainbow = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/maps/random.js
+// node_modules/@colors/colors/lib/maps/random.js
 var require_random = __commonJS((exports, module) => {
   module["exports"] = function(colors) {
     var available = [
@@ -3004,7 +3004,7 @@ var require_random = __commonJS((exports, module) => {
   };
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/lib/colors.js
+// node_modules/@colors/colors/lib/colors.js
 var require_colors = __commonJS((exports, module) => {
   var colors = {};
   module["exports"] = colors;
@@ -3026,7 +3026,7 @@ var require_colors = __commonJS((exports, module) => {
   colors.stripColors = colors.strip = function(str) {
     return ("" + str).replace(/\x1B\[\d+m/g, "");
   };
-  var stylize = colors.stylize = function stylize(str, style) {
+  var stylize = colors.stylize = function stylize2(str, style) {
     if (!colors.enabled) {
       return str + "";
     }
@@ -3044,8 +3044,8 @@ var require_colors = __commonJS((exports, module) => {
     return str.replace(matchOperatorsRe, "\\$&");
   };
   function build(_styles) {
-    var builder = function builder() {
-      return applyStyle3.apply(builder, arguments);
+    var builder = function builder2() {
+      return applyStyle3.apply(builder2, arguments);
     };
     builder._styles = _styles;
     builder.__proto__ = proto3;
@@ -3064,7 +3064,7 @@ var require_colors = __commonJS((exports, module) => {
     });
     return ret;
   }();
-  var proto3 = defineProps(function colors() {}, styles4);
+  var proto3 = defineProps(function colors2() {}, styles4);
   function applyStyle3() {
     var args = Array.prototype.slice.call(arguments);
     var str = args.map(function(arg) {
@@ -3123,7 +3123,7 @@ var require_colors = __commonJS((exports, module) => {
     });
     return ret;
   }
-  var sequencer = function sequencer(map2, str) {
+  var sequencer = function sequencer2(map2, str) {
     var exploded = str.split("");
     exploded = exploded.map(map2);
     return exploded.join("");
@@ -3146,13 +3146,13 @@ var require_colors = __commonJS((exports, module) => {
   defineProps(colors, init());
 });
 
-// node_modules/.pnpm/@colors+colors@1.5.0/node_modules/@colors/colors/safe.js
+// node_modules/@colors/colors/safe.js
 var require_safe = __commonJS((exports, module) => {
   var colors = require_colors();
   module["exports"] = colors;
 });
 
-// node_modules/.pnpm/cli-table3@0.6.5/node_modules/cli-table3/src/cell.js
+// node_modules/cli-table3/src/cell.js
 var require_cell = __commonJS((exports, module) => {
   var { info, debug } = require_debug();
   var utils = require_utils();
@@ -3464,7 +3464,7 @@ var require_cell = __commonJS((exports, module) => {
   module.exports.RowSpanCell = RowSpanCell;
 });
 
-// node_modules/.pnpm/cli-table3@0.6.5/node_modules/cli-table3/src/layout-manager.js
+// node_modules/cli-table3/src/layout-manager.js
 var require_layout_manager = __commonJS((exports, module) => {
   var { warn, debug } = require_debug();
   var Cell = require_cell();
@@ -3700,7 +3700,7 @@ var require_layout_manager = __commonJS((exports, module) => {
   }
 });
 
-// node_modules/.pnpm/cli-table3@0.6.5/node_modules/cli-table3/src/table.js
+// node_modules/cli-table3/src/table.js
 var require_table = __commonJS((exports, module) => {
   var debug = require_debug();
   var utils = require_utils();
@@ -4521,6 +4521,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 var CONFIG_DIR = join(homedir(), ".bslog");
 var CONFIG_FILE = join(CONFIG_DIR, "config.json");
+var DEFAULT_QUERY_BASE_URL = "https://eu-nbg-2-connect.betterstackdata.com";
 function getApiToken() {
   const token = process.env.BETTERSTACK_API_TOKEN;
   if (!token) {
@@ -4602,7 +4603,7 @@ function resolveSourceAlias(source) {
 
 // src/commands/config.ts
 function setConfig(key, value) {
-  const validKeys = ["source", "limit", "format", "logLevel"];
+  const validKeys = ["source", "limit", "format", "logLevel", "queryBaseUrl"];
   if (!validKeys.includes(key)) {
     console.error(source_default2.red(`Invalid config key: ${key}`));
     console.error(`Valid keys: ${validKeys.join(", ")}`);
@@ -4651,6 +4652,15 @@ function setConfig(key, value) {
       console.log(source_default2.green(`Default log level set to: ${resolved}`));
       break;
     }
+    case "queryBaseUrl": {
+      if (!value.startsWith("http://") && !value.startsWith("https://")) {
+        console.error(source_default2.red("queryBaseUrl must start with http:// or https://"));
+        process.exit(1);
+      }
+      updateConfig({ queryBaseUrl: value });
+      console.log(source_default2.green(`Query base URL set to: ${value}`));
+      break;
+    }
   }
 }
 function showConfig(options = {}) {
@@ -4661,6 +4671,7 @@ function showConfig(options = {}) {
       defaultLimit: config.defaultLimit ?? 100,
       defaultLogLevel: config.defaultLogLevel ?? "all",
       outputFormat: config.outputFormat ?? "json",
+      queryBaseUrl: config.queryBaseUrl ?? DEFAULT_QUERY_BASE_URL,
       savedQueries: config.savedQueries ?? {},
       queryHistory: config.queryHistory ?? []
     };
@@ -4674,6 +4685,7 @@ Current Configuration:
   console.log(`Default Limit: ${config.defaultLimit || 100}`);
   console.log(`Default Log Level: ${config.defaultLogLevel || "all"}`);
   console.log(`Output Format: ${config.outputFormat || "json"}`);
+  console.log(`Query Base URL: ${config.queryBaseUrl || DEFAULT_QUERY_BASE_URL}`);
   if (config.savedQueries && Object.keys(config.savedQueries).length > 0) {
     console.log(source_default2.bold(`
 Saved Queries:`));
@@ -4721,7 +4733,6 @@ function toClickHouseDateTime(date) {
 
 // src/api/client.ts
 var TELEMETRY_BASE_URL = "https://telemetry.betterstack.com/api/v1";
-var QUERY_BASE_URL = "https://eu-nbg-2-connect.betterstackdata.com";
 var DEFAULT_TIMEOUT_MS = 30000;
 
 class BetterStackClient {
@@ -4766,10 +4777,12 @@ class BetterStackClient {
     } else {
       headers.Authorization = `Bearer ${this.token}`;
     }
+    const config = loadConfig();
+    const queryBaseUrl = config.queryBaseUrl || DEFAULT_QUERY_BASE_URL;
     const { signal, dispose } = createRequestSignal(undefined, DEFAULT_TIMEOUT_MS);
     let response;
     try {
-      response = await fetch(QUERY_BASE_URL, {
+      response = await fetch(queryBaseUrl, {
         method: "POST",
         headers,
         body: sql,
@@ -4897,13 +4910,8 @@ class SourcesAPI {
     while (hasMore) {
       const response = await this.list(page, 50);
       sources.push(...response.data);
-      if (response.pagination) {
-        const { total, page: currentPage, per_page } = response.pagination;
-        hasMore = currentPage * per_page < total;
-        page++;
-      } else {
-        hasMore = false;
-      }
+      hasMore = response.pagination?.next !== null;
+      page++;
     }
     return sources;
   }
@@ -5054,7 +5062,8 @@ class QueryAPI {
     if (!source) {
       throw new Error(`Source not found: ${sourceName}`);
     }
-    const tableName = `t${source.attributes.team_id}_${source.attributes.table_name}_logs`;
+    const tablePrefix = `t${source.attributes.team_id}_${source.attributes.table_name}`;
+    const tableName = `${tablePrefix}_logs`;
     const fields = options.fields && options.fields.length > 0 ? this.buildFieldSelection(options.fields) : "dt, raw";
     let sql = `SELECT ${fields} FROM remote(${tableName})`;
     const conditions = [];
@@ -5087,14 +5096,22 @@ class QueryAPI {
     if (options.search) {
       conditions.push(`raw LIKE '%${escapeSqlString(options.search)}%'`);
     }
+    const containsEntries = [];
     if (options.where) {
-      for (const [key, value] of Object.entries(options.where)) {
+      for (const [rawKey, value] of Object.entries(options.where)) {
+        const isContains = rawKey.startsWith("~");
+        const key = isContains ? rawKey.slice(1) : rawKey;
         const accessor = this.buildJsonAccessor(key);
         if (value === null) {
           conditions.push(`${accessor} IS NULL`);
           continue;
         }
-        if (typeof value === "string") {
+        if (isContains) {
+          const escapedField = escapeSqlString(key);
+          const escaped = escapeSqlString(String(value));
+          containsEntries.push({ field: escapedField, value: escaped });
+          conditions.push(`(JSONExtract(raw, 'message', 'Nullable(String)') LIKE '%${escaped}%'` + ` OR has(ifNull(JSONExtract(raw, '${escapedField}', 'Array(String)'), []), '${escaped}'))`);
+        } else if (typeof value === "string") {
           conditions.push(`${accessor} = '${escapeSqlString(value)}'`);
         } else {
           const serialized = typeof value === "object" ? JSON.stringify(value) : String(value);
@@ -5104,6 +5121,24 @@ class QueryAPI {
     }
     if (conditions.length > 0) {
       sql += ` WHERE ${conditions.join(" AND ")}`;
+    }
+    if (containsEntries.length > 0) {
+      const s3Name = `${tablePrefix}_s3`;
+      const s3Conditions = ["_row_type = 1"];
+      if (options.since) {
+        const sinceDate = parseTimeString(options.since);
+        s3Conditions.push(`dt >= toDateTime64('${toClickHouseDateTime(sinceDate)}', 3)`);
+      } else {
+        s3Conditions.push("dt > now() - INTERVAL 24 HOUR");
+      }
+      if (options.until) {
+        const untilDate = parseTimeString(options.until);
+        s3Conditions.push(`dt <= toDateTime64('${toClickHouseDateTime(untilDate)}', 3)`);
+      }
+      const searchConditions = containsEntries.map(({ field, value }) => `(JSONExtract(raw, 'message', 'Nullable(String)') LIKE '%${value}%'` + ` OR has(ifNull(JSONExtract(raw, '${field}', 'Array(String)'), []), '${value}'))`);
+      s3Conditions.push(`(${searchConditions.join(" OR ")})`);
+      sql += ` UNION ALL SELECT ${fields} FROM s3Cluster(primary, ${s3Name})`;
+      sql += ` WHERE ${s3Conditions.join(" AND ")}`;
     }
     sql += " ORDER BY dt DESC";
     sql += ` LIMIT ${options.limit || config.defaultLimit || 100}`;
@@ -6232,6 +6267,20 @@ function parseWhereOption(input) {
     if (!trimmed) {
       continue;
     }
+    const tildeEqualsIndex = trimmed.indexOf("~=");
+    if (tildeEqualsIndex > 0) {
+      const key2 = `~${trimmed.slice(0, tildeEqualsIndex).trim()}`;
+      let valueString2 = trimmed.slice(tildeEqualsIndex + 2).trim();
+      if (valueString2 && valueString2.length >= 2) {
+        const firstChar = valueString2[0];
+        const lastChar = valueString2[valueString2.length - 1];
+        if (firstChar === '"' && lastChar === '"' || firstChar === "'" && lastChar === "'") {
+          valueString2 = valueString2.slice(1, -1);
+        }
+      }
+      where[key2] = valueString2 ?? "";
+      continue;
+    }
     const equalsIndex = trimmed.indexOf("=");
     if (equalsIndex <= 0) {
       continue;
@@ -6352,11 +6401,98 @@ function mergeWithRuntime(options, runtime, extras = {}) {
   return merged;
 }
 function applySharedLogOptions(command) {
-  command.option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Time lower bound (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Time upper bound (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--fields <names>", "Comma-separated list of fields to select (e.g., dt,message,level)").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value). Repeat to add multiple filters", collectWhereFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information");
+  command.option("-n, --limit <number>", "Number of logs to fetch", "100").option("--since <time>", "Time lower bound (e.g., 1h, 2d, 2024-01-01)").option("--until <time>", "Time upper bound (e.g., 2024-01-01T12:00)").option("--format <type>", "Output format (json|table|csv|pretty)", "pretty").option("--fields <names>", "Comma-separated list of fields to select (e.g., dt,message,level)").option("--sources <names>", "Comma-separated list of sources to merge").option("--where <filter...>", "Filter JSON fields (field=value for exact match, field~=value for substring match)", collectWhereFilters, []).option("--jq <filter>", "Pipe JSON output through jq (requires jq in PATH)").option("-v, --verbose", "Show SQL query and debug information");
 }
 function stripRuntimeOptionProps(options) {
   const { limit: _limit, sources: _sources, where: _where, jq: _jq, ...rest } = options;
   return rest;
+}
+
+// src/utils/options.ts
+function parseWhereOption2(input) {
+  if (!input) {
+    return;
+  }
+  const rawValues = Array.isArray(input) ? input : [input];
+  const where = {};
+  for (const raw of rawValues) {
+    if (!raw) {
+      continue;
+    }
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      continue;
+    }
+    const tildeEqualsIndex = trimmed.indexOf("~=");
+    if (tildeEqualsIndex > 0) {
+      const key2 = `~${trimmed.slice(0, tildeEqualsIndex).trim()}`;
+      let valueString2 = trimmed.slice(tildeEqualsIndex + 2).trim();
+      if (valueString2 && valueString2.length >= 2) {
+        const firstChar = valueString2[0];
+        const lastChar = valueString2[valueString2.length - 1];
+        if (firstChar === '"' && lastChar === '"' || firstChar === "'" && lastChar === "'") {
+          valueString2 = valueString2.slice(1, -1);
+        }
+      }
+      where[key2] = valueString2 ?? "";
+      continue;
+    }
+    const equalsIndex = trimmed.indexOf("=");
+    if (equalsIndex <= 0) {
+      continue;
+    }
+    const key = trimmed.slice(0, equalsIndex).trim();
+    if (!key) {
+      continue;
+    }
+    let valueString = trimmed.slice(equalsIndex + 1).trim();
+    if (valueString && valueString.length >= 2) {
+      const firstChar = valueString[0];
+      const lastChar = valueString[valueString.length - 1];
+      if (firstChar === '"' && lastChar === '"' || firstChar === "'" && lastChar === "'") {
+        valueString = valueString.slice(1, -1);
+      }
+    }
+    const parsedValue = parseWhereValue2(valueString);
+    where[key] = parsedValue;
+  }
+  return Object.keys(where).length > 0 ? where : undefined;
+}
+function parseWhereValue2(value) {
+  if (value === undefined) {
+    return;
+  }
+  if (value.length === 0) {
+    return "";
+  }
+  const lower = value.toLowerCase();
+  if (lower === "null") {
+    return null;
+  }
+  if (lower === "true") {
+    return true;
+  }
+  if (lower === "false") {
+    return false;
+  }
+  if (/^-?\d+$/.test(value)) {
+    const asNumber = Number.parseInt(value, 10);
+    if (!Number.isNaN(asNumber)) {
+      return asNumber;
+    }
+  }
+  if (/^-?\d*\.\d+$/.test(value)) {
+    const asFloat = Number.parseFloat(value);
+    if (!Number.isNaN(asFloat)) {
+      return asFloat;
+    }
+  }
+  if (value.startsWith("{") && value.endsWith("}") || value.startsWith("[") && value.endsWith("]")) {
+    try {
+      return JSON.parse(value);
+    } catch {}
+  }
+  return value;
 }
 
 // src/index.ts
@@ -6385,8 +6521,14 @@ function extractStringOption(options, key) {
   const value = options[key];
   return typeof value === "string" ? value : undefined;
 }
-program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").description("Query logs using GraphQL-like syntax").action(async (query, options) => {
-  await runQuery(query, options);
+var collectWhereFilters2 = (value, previous = []) => [
+  ...previous,
+  value
+];
+program2.command("query").argument("<query>", "GraphQL-like query string").option("-s, --source <name>", "Source name").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "pretty").option("-v, --verbose", "Show SQL query and debug information").option("--where <filter...>", "Filter JSON fields (field=value for exact match, field~=value for substring match)", collectWhereFilters2, []).description("Query logs using GraphQL-like syntax").action(async (query, options) => {
+  const { where: rawWhere, ...rest } = options;
+  const where = parseWhereOption2(rawWhere);
+  await runQuery(query, { ...rest, ...where ? { where } : {} });
 });
 program2.command("sql").argument("<sql>", "Raw ClickHouse SQL query").option("-f, --format <type>", "Output format (json|table|csv|pretty)", "json").option("-v, --verbose", "Show SQL query and debug information").description("Execute raw ClickHouse SQL query").action(async (sql, options) => {
   await runSql(sql, options);
@@ -6512,6 +6654,7 @@ program2.on("--help", () => {
   console.log("  $ bslog errors --since 1h             # Errors from last hour");
   console.log('  $ bslog search "authentication failed"');
   console.log('  $ bslog search "timeline" --where module=timeline --where env=production --until 2025-09-24T18:00');
+  console.log('  $ bslog search "error" --where "correlation_ids~=session_id:abc123"  # search in array fields');
   console.log("  $ bslog tail --format json --jq '.[] | {dt, message}'");
   console.log("");
   console.log("  # Sources:");

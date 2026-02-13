@@ -178,7 +178,8 @@ export class QueryAPI {
     }
 
     // Build the SQL query using team_id and table_name from the source
-    const tableName = `t${source.attributes.team_id}_${source.attributes.table_name}_logs`
+    const tablePrefix = `t${source.attributes.team_id}_${source.attributes.table_name}`
+    const tableName = `${tablePrefix}_logs`
     const fields =
       options.fields && options.fields.length > 0
         ? this.buildFieldSelection(options.fields)
@@ -233,26 +234,50 @@ export class QueryAPI {
       conditions.push(`raw LIKE '%${escapeSqlString(options.search)}%'`)
     }
 
+    const whereConditions: string[] = []
+
     if (options.where) {
       for (const [key, value] of Object.entries(options.where)) {
         const accessor = this.buildJsonAccessor(key)
 
         if (value === null) {
-          conditions.push(`${accessor} IS NULL`)
-          continue
-        }
-
-        if (typeof value === 'string') {
-          conditions.push(`${accessor} = '${escapeSqlString(value)}'`)
+          whereConditions.push(`${accessor} IS NULL`)
+        } else if (typeof value === 'string') {
+          whereConditions.push(`${accessor} = '${escapeSqlString(value)}'`)
         } else {
           const serialized = typeof value === 'object' ? JSON.stringify(value) : String(value)
-          conditions.push(`${accessor} = '${escapeSqlString(serialized)}'`)
+          whereConditions.push(`${accessor} = '${escapeSqlString(serialized)}'`)
         }
       }
+      conditions.push(...whereConditions)
     }
 
     if (conditions.length > 0) {
       sql += ` WHERE ${conditions.join(' AND ')}`
+    }
+
+    // Append UNION ALL with S3 cluster query when search is used
+    if (options.search) {
+      const s3Name = `${tablePrefix}_s3`
+      const s3Conditions: string[] = ['_row_type = 1']
+
+      if (options.since) {
+        const sinceDate = parseTimeString(options.since)
+        s3Conditions.push(`dt >= toDateTime64('${toClickHouseDateTime(sinceDate)}', 3)`)
+      } else {
+        s3Conditions.push('dt > now() - INTERVAL 24 HOUR')
+      }
+
+      if (options.until) {
+        const untilDate = parseTimeString(options.until)
+        s3Conditions.push(`dt <= toDateTime64('${toClickHouseDateTime(untilDate)}', 3)`)
+      }
+
+      s3Conditions.push(`raw LIKE '%${escapeSqlString(options.search)}%'`)
+      s3Conditions.push(...whereConditions)
+
+      sql += ` UNION ALL SELECT ${fields} FROM s3Cluster(primary, ${s3Name})`
+      sql += ` WHERE ${s3Conditions.join(' AND ')}`
     }
 
     // Add ORDER BY and LIMIT
